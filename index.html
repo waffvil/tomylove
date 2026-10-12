@@ -1,0 +1,858 @@
+<!doctype html>
+<html lang="en" data-pattern="plaid">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>tomylove ♡</title>
+<meta name="description" content="a tiny corner of the internet, made just for you">
+<meta name="theme-color" content="#ffb7d0">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M32 56C10 40 4 28 12 18c6-7 15-6 20 2 5-8 14-9 20-2 8 10 2 22-20 38z' fill='%23ffb7d0' stroke='%236b3a55' stroke-width='5'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=Pixelify+Sans:wght@400;600&family=Nunito:wght@600;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --pink: #ffb7d0;
+    --pink-deep: #f48fb4;
+    --pink-soft: #ffe1ec;
+    --yellow: #fff1a8;
+    --yellow-deep: #ffd966;
+    --cream: #fffaf0;
+    --ink: #6b3a55;
+    --white: #ffffff;
+    --pixel: "Pixelify Sans", ui-monospace, monospace;
+    --bubble: "Bagel Fat One", "Nunito", system-ui, sans-serif;
+    --body: "Nunito", system-ui, sans-serif;
+    --shadow: 5px 5px 0 var(--ink);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+
+  body {
+    min-height: 100vh;
+    color: var(--ink);
+    font-family: var(--body);
+    background-color: #fff3c4;
+    padding-bottom: 64px; /* room for the taskbar */
+    overflow-x: hidden;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* ---------- background patterns ---------- */
+
+  /* plaid: wide pink bands crossing, with triple white pinstripes and a thin yellow line */
+  html[data-pattern="plaid"] body {
+    background-color: #fff3c4;
+    background-image:
+      repeating-linear-gradient(0deg,
+        rgba(255,170,200,.38) 0 34px,
+        transparent 34px 50px,
+        rgba(255,255,255,.85) 50px 52px, transparent 52px 55px,
+        rgba(255,255,255,.85) 55px 57px, transparent 57px 60px,
+        rgba(255,255,255,.85) 60px 62px,
+        transparent 62px 90px,
+        rgba(255,205,90,.55) 90px 94px,
+        transparent 94px 120px),
+      repeating-linear-gradient(90deg,
+        rgba(255,170,200,.38) 0 34px,
+        transparent 34px 50px,
+        rgba(255,255,255,.85) 50px 52px, transparent 52px 55px,
+        rgba(255,255,255,.85) 55px 57px, transparent 57px 60px,
+        rgba(255,255,255,.85) 60px 62px,
+        transparent 62px 90px,
+        rgba(255,205,90,.55) 90px 94px,
+        transparent 94px 120px);
+  }
+
+  /* gingham: soft pink checks that overlap into deeper squares */
+  html[data-pattern="gingham"] body {
+    background-color: #fffbe8;
+    background-image:
+      repeating-linear-gradient(0deg, rgba(255,160,195,.42) 0 22px, transparent 22px 44px),
+      repeating-linear-gradient(90deg, rgba(255,160,195,.42) 0 22px, transparent 22px 44px);
+  }
+
+  /* checkerboard: pink and butter yellow */
+  html[data-pattern="checker"] body {
+    background-color: #fff3bf;
+    background-image: conic-gradient(#ffd3e3 25%, #fff3bf 0 50%, #ffd3e3 0 75%, #fff3bf 0);
+    background-size: 56px 56px;
+  }
+
+  /* lemon plaid: yellow-forward version with pink pinstripes */
+  html[data-pattern="lemon"] body {
+    background-color: #fffaf0;
+    background-image:
+      repeating-linear-gradient(0deg,
+        rgba(255,214,102,.45) 0 40px, transparent 40px 56px,
+        rgba(244,143,180,.55) 56px 58px, transparent 58px 62px,
+        rgba(244,143,180,.55) 62px 64px, transparent 64px 100px),
+      repeating-linear-gradient(90deg,
+        rgba(255,214,102,.45) 0 40px, transparent 40px 56px,
+        rgba(244,143,180,.55) 56px 58px, transparent 58px 62px,
+        rgba(244,143,180,.55) 62px 64px, transparent 64px 100px);
+  }
+
+  /* ---------- floating decorations ---------- */
+  .floaties { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+  .floaties span {
+    position: absolute;
+    font-size: var(--s, 28px);
+    color: var(--c, var(--pink-deep));
+    text-shadow: 2px 2px 0 var(--white);
+    animation: bob var(--d, 6s) ease-in-out infinite alternate;
+    opacity: .85;
+  }
+  @keyframes bob {
+    from { transform: translateY(0) rotate(-8deg); }
+    to   { transform: translateY(-18px) rotate(8deg); }
+  }
+
+  /* ---------- marquee ---------- */
+  .marquee {
+    position: relative; z-index: 2;
+    background: var(--ink);
+    color: var(--yellow);
+    font-family: var(--pixel);
+    font-size: 15px;
+    white-space: nowrap;
+    overflow: hidden;
+    border-bottom: 3px solid var(--pink-deep);
+    padding: 6px 0;
+  }
+  .marquee-track { display: inline-block; animation: scroll 28s linear infinite; }
+  .marquee-track span { padding-right: 48px; }
+  @keyframes scroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+  /* ---------- layout ---------- */
+  .wrap {
+    position: relative; z-index: 1;
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 28px 16px 24px;
+    display: grid;
+    gap: 28px;
+  }
+
+  /* ---------- retro window ---------- */
+  .win {
+    background: var(--cream);
+    border: 3px solid var(--ink);
+    border-radius: 14px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+  .win.shake { animation: shake .45s ease; }
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    20% { transform: translateX(-8px) rotate(-1deg); }
+    40% { transform: translateX(8px) rotate(1deg); }
+    60% { transform: translateX(-5px); }
+    80% { transform: translateX(5px); }
+  }
+  .titlebar {
+    display: flex; align-items: center; gap: 8px;
+    padding: 7px 10px;
+    background: linear-gradient(90deg, var(--pink) 0%, #ffd0de 55%, var(--yellow) 100%);
+    border-bottom: 3px solid var(--ink);
+    font-family: var(--pixel);
+    font-weight: 600;
+    font-size: 15px;
+  }
+  .titlebar .name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .titlebar .btns { display: flex; gap: 5px; }
+  .titlebar button {
+    width: 22px; height: 22px;
+    border: 2px solid var(--ink);
+    border-radius: 6px;
+    background: var(--white);
+    color: var(--ink);
+    font: 600 12px/1 var(--pixel);
+    padding: 0;
+    cursor: pointer;
+    box-shadow: 2px 2px 0 var(--ink);
+  }
+  .titlebar button:active { transform: translate(2px,2px); box-shadow: none; }
+  .win-body { padding: 22px 20px; }
+
+  /* ---------- hero ---------- */
+  .hero { text-align: center; }
+  .title {
+    margin: 4px 0 6px;
+    font-family: var(--bubble);
+    font-weight: 400;
+    font-size: clamp(54px, 15vw, 120px);
+    line-height: 1;
+    letter-spacing: 1px;
+    user-select: none;
+  }
+  .title span {
+    display: inline-block;
+    cursor: pointer;
+    color: var(--fill, var(--white));
+    -webkit-text-stroke: 7px var(--ink);
+    paint-order: stroke fill;
+    text-shadow: 5px 5px 0 var(--ink);
+    animation: wave 2.4s ease-in-out infinite;
+    animation-delay: calc(var(--i) * .12s);
+    transition: transform .15s;
+  }
+  .title span.hit { animation: jump .4s ease; }
+  @keyframes wave {
+    0%, 60%, 100% { transform: translateY(0); }
+    30% { transform: translateY(-10px); }
+  }
+  @keyframes jump {
+    0% { transform: translateY(0) scale(1); }
+    40% { transform: translateY(-22px) scale(1.15, .9); }
+    100% { transform: translateY(0) scale(1); }
+  }
+  .tagline {
+    font-family: var(--pixel);
+    font-size: clamp(15px, 3.6vw, 19px);
+    margin: 10px 0 18px;
+  }
+  .tagline .blink { animation: blink 1s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+  .hint { font-family: var(--pixel); font-size: 13px; opacity: .7; margin: 0 0 18px; }
+
+  .chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+  .chip {
+    font: 800 15px/1 var(--body);
+    color: var(--ink);
+    background: var(--yellow);
+    border: 3px solid var(--ink);
+    border-radius: 999px;
+    padding: 10px 16px;
+    box-shadow: 3px 3px 0 var(--ink);
+    cursor: pointer;
+    transition: transform .12s, box-shadow .12s, background .2s;
+  }
+  .chip:nth-child(2) { background: var(--pink); }
+  .chip:nth-child(3) { background: var(--white); }
+  .chip:hover { transform: translate(-1px,-2px) rotate(-2deg); box-shadow: 4px 5px 0 var(--ink); }
+  .chip:active { transform: translate(3px,3px); box-shadow: none; }
+
+  /* ---------- app cards ---------- */
+  .section-label {
+    font-family: var(--pixel);
+    font-size: 14px;
+    margin: 0 0 16px;
+    opacity: .8;
+  }
+  .apps {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 20px;
+  }
+  .app {
+    position: relative;
+    display: flex; flex-direction: column; align-items: center;
+    text-align: center;
+    gap: 10px;
+    padding: 22px 18px 20px;
+    border: 3px solid var(--ink);
+    border-radius: 18px;
+    background: var(--white);
+    box-shadow: var(--shadow);
+    color: var(--ink);
+    text-decoration: none;
+    transform: rotate(var(--tilt, -1.2deg));
+    transition: transform .18s cubic-bezier(.3,1.6,.6,1), box-shadow .18s;
+  }
+  .app:nth-child(2) { --tilt: 1.4deg; }
+  .app:nth-child(3) { --tilt: -.6deg; }
+  .app:hover, .app:focus-visible {
+    transform: rotate(0) translateY(-6px) scale(1.03);
+    box-shadow: 8px 10px 0 var(--ink);
+    outline: none;
+  }
+  .app:active { transform: translateY(2px) scale(.98); box-shadow: 2px 2px 0 var(--ink); }
+  .app.pink   { background: linear-gradient(180deg, var(--pink-soft), var(--white) 70%); }
+  .app.yellow { background: linear-gradient(180deg, #fff6c9, var(--white) 70%); }
+  .app-icon {
+    width: 96px; height: 96px;
+    display: grid; place-items: center;
+    border-radius: 24px;
+    background: var(--cream);
+    border: 3px solid var(--ink);
+    box-shadow: 3px 3px 0 var(--ink);
+  }
+  .app:hover .app-icon { animation: wiggle .5s ease; }
+  @keyframes wiggle {
+    0%,100% { transform: rotate(0); }
+    25% { transform: rotate(-9deg) scale(1.06); }
+    50% { transform: rotate(7deg) scale(1.06); }
+    75% { transform: rotate(-4deg); }
+  }
+  .app-icon svg { width: 68px; height: 68px; }
+  .app h3 { margin: 4px 0 0; font-family: var(--bubble); font-weight: 400; font-size: 28px; }
+  .app p { margin: 0; font-size: 15px; line-height: 1.45; }
+  .go {
+    margin-top: 6px;
+    font: 600 15px/1 var(--pixel);
+    background: var(--ink);
+    color: var(--yellow);
+    padding: 9px 16px;
+    border-radius: 999px;
+  }
+  .sticker {
+    position: absolute;
+    top: -14px; right: -10px;
+    font: 600 13px/1 var(--pixel);
+    background: var(--yellow-deep);
+    border: 2px solid var(--ink);
+    border-radius: 999px;
+    padding: 6px 10px;
+    transform: rotate(12deg);
+    box-shadow: 2px 2px 0 var(--ink);
+  }
+  .sticker.pinkish { background: var(--pink); transform: rotate(-10deg); }
+  .app.soon {
+    background: repeating-linear-gradient(45deg, var(--cream) 0 12px, #fff5d6 12px 24px);
+    border-style: dashed;
+    box-shadow: none;
+    cursor: default;
+  }
+  .app.soon:hover { transform: rotate(var(--tilt)); box-shadow: none; }
+  .app.soon .app-icon { background: var(--white); font-size: 40px; }
+
+  /* ---------- footer badges ---------- */
+  footer { text-align: center; font-family: var(--pixel); font-size: 14px; }
+  .badges { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-bottom: 14px; }
+  .badge {
+    width: 88px; height: 31px;
+    display: grid; place-items: center;
+    font: 600 10px/1.1 var(--pixel);
+    border: 2px solid var(--ink);
+    text-align: center;
+    padding: 2px;
+  }
+  .badge.b1 { background: linear-gradient(180deg, var(--pink), var(--pink-deep)); color: var(--white); }
+  .badge.b2 { background: var(--yellow); }
+  .badge.b3 { background: var(--ink); color: var(--pink); }
+  .badge.b4 { background: repeating-linear-gradient(90deg, var(--pink-soft) 0 6px, var(--yellow) 6px 12px); }
+  .counter {
+    display: inline-block;
+    background: #2b1b24;
+    color: #ff9ec4;
+    font: 600 18px/1 var(--pixel);
+    letter-spacing: 3px;
+    padding: 6px 10px;
+    border: 2px solid var(--ink);
+    border-radius: 6px;
+    margin: 4px 0 10px;
+  }
+
+  /* ---------- taskbar + start menu ---------- */
+  .taskbar {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
+    background: linear-gradient(180deg, #ffd0e0, var(--pink));
+    border-top: 3px solid var(--ink);
+    font-family: var(--pixel);
+  }
+  .taskbar .spacer { flex: 1; }
+  .tb-btn {
+    font: 600 15px/1 var(--pixel);
+    color: var(--ink);
+    background: var(--yellow);
+    border: 2px solid var(--ink);
+    border-radius: 10px;
+    padding: 8px 14px;
+    box-shadow: 2px 2px 0 var(--ink);
+    cursor: pointer;
+  }
+  .tb-btn:active, .tb-btn[aria-expanded="true"] { transform: translate(2px,2px); box-shadow: none; }
+  .tray {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--cream);
+    border: 2px solid var(--ink);
+    border-radius: 10px;
+    padding: 5px 10px;
+    font-size: 15px;
+  }
+  .tray button { background: none; border: 0; padding: 0; font-size: 17px; cursor: pointer; line-height: 1; }
+
+  .startmenu {
+    position: fixed; left: 12px; bottom: calc(62px + env(safe-area-inset-bottom)); z-index: 21;
+    width: min(260px, calc(100vw - 24px));
+    background: var(--cream);
+    border: 3px solid var(--ink);
+    border-radius: 14px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    display: none;
+  }
+  .startmenu.open { display: block; animation: popin .18s ease; }
+  @keyframes popin { from { transform: translateY(10px) scale(.96); opacity: 0; } }
+  .startmenu .side {
+    background: linear-gradient(90deg, var(--pink), var(--yellow));
+    font: 400 22px/1 var(--bubble);
+    padding: 12px 14px;
+    border-bottom: 3px solid var(--ink);
+  }
+  .startmenu a, .startmenu button {
+    display: flex; align-items: center; gap: 10px;
+    width: 100%;
+    padding: 12px 14px;
+    font: 600 16px/1 var(--pixel);
+    color: var(--ink);
+    text-decoration: none;
+    background: none;
+    border: 0;
+    border-bottom: 2px dashed var(--pink);
+    cursor: pointer;
+    text-align: left;
+  }
+  .startmenu > :last-child { border-bottom: 0; }
+  .startmenu a:hover, .startmenu button:hover { background: var(--pink-soft); }
+
+  /* ---------- love note modal ---------- */
+  .modal {
+    position: fixed; inset: 0; z-index: 30;
+    display: none; place-items: center;
+    padding: 16px;
+    background: rgba(107,58,85,.25);
+  }
+  .modal.open { display: grid; }
+  .modal .win { width: min(420px, 100%); animation: popin .22s cubic-bezier(.3,1.6,.6,1); }
+  .note {
+    font-family: var(--pixel);
+    font-size: 19px;
+    line-height: 1.5;
+    min-height: 90px;
+    margin: 0 0 18px;
+    background:
+      repeating-linear-gradient(180deg, transparent 0 27px, var(--pink) 27px 28px);
+    padding: 2px 4px;
+  }
+  .note-actions { display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap; }
+
+  /* ---------- toast + cursor trail ---------- */
+  .toast {
+    position: fixed; left: 50%; bottom: calc(80px + env(safe-area-inset-bottom)); z-index: 40;
+    transform: translate(-50%, 20px);
+    background: var(--ink); color: var(--yellow);
+    font: 600 15px/1.3 var(--pixel);
+    padding: 10px 16px;
+    border-radius: 999px;
+    opacity: 0;
+    transition: opacity .2s, transform .2s;
+    pointer-events: none;
+    max-width: calc(100vw - 32px);
+    text-align: center;
+  }
+  .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+  .spark {
+    position: fixed; z-index: 50;
+    pointer-events: none;
+    font-size: 16px;
+    animation: spark .9s ease-out forwards;
+    text-shadow: 1px 1px 0 var(--white);
+  }
+  @keyframes spark {
+    from { transform: translate(-50%,-50%) scale(1); opacity: 1; }
+    to   { transform: translate(calc(-50% + var(--dx)), calc(-50% + 30px)) scale(.3) rotate(90deg); opacity: 0; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
+  @media (max-width: 520px) {
+    .win-body { padding: 18px 14px; }
+    .title span { -webkit-text-stroke-width: 5px; text-shadow: 3px 3px 0 var(--ink); }
+    .tb-btn { padding: 8px 10px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="floaties" aria-hidden="true">
+  <span style="left:4%;top:18%;--s:34px;--d:5s">♡</span>
+  <span style="left:90%;top:12%;--s:30px;--c:#ffcf4d;--d:7s">✦</span>
+  <span style="left:7%;top:62%;--s:26px;--c:#ffcf4d;--d:6s">✧</span>
+  <span style="left:93%;top:55%;--s:38px;--d:5.5s">♡</span>
+  <span style="left:50%;top:92%;--s:22px;--c:#ffcf4d;--d:6.5s">⋆</span>
+  <span style="left:80%;top:84%;--s:28px;--d:7.5s">✿</span>
+  <span style="left:16%;top:88%;--s:30px;--d:5.8s">✿</span>
+</div>
+
+<div class="marquee" aria-hidden="true">
+  <div class="marquee-track">
+    <span>✧ welcome to tomylove ✧</span><span>♡ made just for you ♡</span><span>☆ best viewed holding my hand ☆</span><span>✿ new apps whenever i make you one ✿</span><span>⋆ you are my favourite person on the whole internet ⋆</span>
+    <span>✧ welcome to tomylove ✧</span><span>♡ made just for you ♡</span><span>☆ best viewed holding my hand ☆</span><span>✿ new apps whenever i make you one ✿</span><span>⋆ you are my favourite person on the whole internet ⋆</span>
+  </div>
+</div>
+
+<main class="wrap">
+
+  <section class="win hero" id="heroWin">
+    <div class="titlebar">
+      <span>♡</span><span class="name">welcome.exe</span>
+      <div class="btns">
+        <button type="button" data-nope aria-label="minimise">_</button>
+        <button type="button" data-nope aria-label="maximise">□</button>
+        <button type="button" data-nope aria-label="close">×</button>
+      </div>
+    </div>
+    <div class="win-body">
+      <h1 class="title" id="title" aria-label="tomylove"></h1>
+      <p class="tagline">a tiny corner of the internet, made just for you<span class="blink">_</span></p>
+      <p class="hint">(psst… tap the letters)</p>
+      <div class="chips">
+        <button class="chip" type="button" id="mailBtn">💌 you've got mail</button>
+        <button class="chip" type="button" id="patternBtn">🎀 change pattern</button>
+        <button class="chip" type="button" id="soundBtn">🔊 sound on</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="win" id="appsWin">
+    <div class="titlebar">
+      <span>✿</span><span class="name">my_apps_for_you</span>
+      <div class="btns">
+        <button type="button" data-nope aria-label="minimise">_</button>
+        <button type="button" data-nope aria-label="maximise">□</button>
+        <button type="button" data-nope aria-label="close">×</button>
+      </div>
+    </div>
+    <div class="win-body">
+      <p class="section-label">C:\tomylove\apps&gt; pick one ♡</p>
+
+      <!-- to add an app: copy one <a class="app"> block and change the link, icon and words -->
+      <div class="apps">
+        <a class="app pink" href="https://waffvil.github.io/photobooth/">
+          <span class="sticker">say cheese!</span>
+          <div class="app-icon">
+            <svg viewBox="0 0 64 64" aria-hidden="true">
+              <rect x="14" y="11" width="14" height="10" rx="3" fill="#ffd966" stroke="#6b3a55" stroke-width="3"/>
+              <rect x="6" y="18" width="52" height="36" rx="9" fill="#ffb7d0" stroke="#6b3a55" stroke-width="3"/>
+              <circle cx="32" cy="36" r="12" fill="#fff1a8" stroke="#6b3a55" stroke-width="3"/>
+              <circle cx="32" cy="36" r="5.5" fill="#6b3a55"/>
+              <circle cx="34.5" cy="33.5" r="1.8" fill="#fff"/>
+              <circle cx="49" cy="26" r="3" fill="#fff" stroke="#6b3a55" stroke-width="2"/>
+              <path d="M13 46c2-1 3 1 2 2s-3 0-2-2z" fill="#fff"/>
+            </svg>
+          </div>
+          <h3>photobooth</h3>
+          <p>snap little photo strips, pick a frame, add stickers and doodles, then keep them forever</p>
+          <span class="go">open ♡</span>
+        </a>
+
+        <a class="app yellow" href="https://waffvil.github.io/mv_screen_fog/">
+          <span class="sticker pinkish">breathe on me</span>
+          <div class="app-icon">
+            <svg viewBox="0 0 64 64" aria-hidden="true">
+              <rect x="7" y="7" width="50" height="50" rx="10" fill="#fdeef4" stroke="#6b3a55" stroke-width="3"/>
+              <circle cx="20" cy="20" r="9" fill="#fff" opacity=".9"/>
+              <circle cx="44" cy="46" r="10" fill="#fff" opacity=".9"/>
+              <circle cx="46" cy="18" r="6" fill="#fff" opacity=".9"/>
+              <path d="M32 47C20 39 17 31 22 27c4-3 8-1 10 3 2-4 6-6 10-3 5 4 2 12-10 20z" fill="none" stroke="#f48fb4" stroke-width="3.5" stroke-linejoin="round"/>
+              <path d="M16 44v6M48 26v5" stroke="#ffd966" stroke-width="3" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <h3>fogged glass</h3>
+          <p>your camera becomes a steamy window. breathe to fog it up, then draw hearts with your finger</p>
+          <span class="go">open ♡</span>
+        </a>
+
+        <div class="app soon" aria-label="more apps coming soon">
+          <div class="app-icon">🎁</div>
+          <h3>coming soon</h3>
+          <p>i'm always making you new little things… check back ✧</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="badges" aria-hidden="true">
+      <div class="badge b1">made with<br>♡ love ♡</div>
+      <div class="badge b2">best viewed<br>with you</div>
+      <div class="badge b3">✧ y2k 4ever ✧</div>
+      <div class="badge b4">100% cute</div>
+    </div>
+    <div>you've visited</div>
+    <div class="counter" id="counter">000001</div>
+    <div>times ♡ (i'm counting)</div>
+  </footer>
+</main>
+
+<nav class="startmenu" id="startMenu" aria-label="start menu">
+  <div class="side">tomylove ♡</div>
+  <a href="https://waffvil.github.io/photobooth/">📷 photobooth</a>
+  <a href="https://waffvil.github.io/mv_screen_fog/">🌫️ fogged glass</a>
+  <button type="button" data-action="mail">💌 a little note</button>
+  <button type="button" data-action="pattern">🎀 change pattern</button>
+</nav>
+
+<div class="taskbar">
+  <button class="tb-btn" type="button" id="startBtn" aria-expanded="false" aria-controls="startMenu">✿ start</button>
+  <span class="spacer"></span>
+  <div class="tray">
+    <button type="button" id="traySound" aria-label="toggle sound">🔊</button>
+    <span id="clock">12:00</span>
+  </div>
+</div>
+
+<div class="modal" id="mailModal" role="dialog" aria-modal="true" aria-labelledby="noteTitle">
+  <div class="win">
+    <div class="titlebar">
+      <span>💌</span><span class="name" id="noteTitle">note_for_you.txt</span>
+      <div class="btns"><button type="button" data-close aria-label="close">×</button></div>
+    </div>
+    <div class="win-body">
+      <p class="note" id="noteText"></p>
+      <div class="note-actions">
+        <button class="chip" type="button" id="nextNote">another one ♡</button>
+        <button class="chip" type="button" data-close>close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+// ---------- edit these to make it yours ----------
+const NOTES = [
+  "you make every ordinary day feel like a sleepover ♡",
+  "i made this whole website just so you'd have somewhere cute to go",
+  "reminder: you are my favourite person on the whole internet",
+  "if you're reading this, i'm probably thinking about you right now",
+  "you + me = best duo. no notes. (well, except these ones)",
+  "go take a photo strip, i want to see that face",
+  "breathe on the fog window and draw me a heart ok?",
+];
+const NOPES = [
+  "nope, you're stuck with me ♡",
+  "this window cannot be closed. it loves you too much",
+  "error 143: too much love to close",
+  "nice try ✧",
+];
+// --------------------------------------------------
+
+const $ = (s) => document.querySelector(s);
+const store = {
+  get(k) { try { return localStorage.getItem("tomylove." + k); } catch { return null; } },
+  set(k, v) { try { localStorage.setItem("tomylove." + k, v); } catch {} },
+};
+
+// ---------- sounds (all synthesised, no files) ----------
+let ac = null;
+let muted = store.get("muted") === "1";
+const PENTA = [523.25, 587.33, 659.25, 783.99, 880, 1046.5, 1174.66, 1318.51];
+
+function audio() {
+  if (!ac) {
+    try { ac = new (window.AudioContext || window.webkitAudioContext)(); } catch { return null; }
+  }
+  if (ac.state === "suspended") ac.resume();
+  return ac;
+}
+function tone(freq, { type = "triangle", dur = 0.15, vol = 0.12, at = 0, slide = null } = {}) {
+  if (muted || !ac) return;
+  const t = ac.currentTime + at;
+  const o = ac.createOscillator();
+  const g = ac.createGain();
+  o.type = type;
+  o.frequency.setValueAtTime(freq, t);
+  if (slide) o.frequency.exponentialRampToValueAtTime(slide, t + dur);
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(vol, t + 0.012);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  o.connect(g).connect(ac.destination);
+  o.start(t);
+  o.stop(t + dur + 0.03);
+}
+const sfx = {
+  blip()  { tone(PENTA[Math.floor(Math.random() * 5) + 3], { dur: 0.08, vol: 0.06 }); },
+  pop()   { tone(500, { type: "sine", slide: 1100, dur: 0.09, vol: 0.14 }); },
+  boing() { tone(180, { slide: 520, dur: 0.22, vol: 0.12 }); tone(520, { slide: 260, dur: 0.18, vol: 0.08, at: 0.2 }); },
+  chime() { [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => tone(f, { dur: 0.4, at: i * 0.07, vol: 0.1 })); },
+  mail()  { tone(1318.5, { type: "sine", dur: 0.45, vol: 0.13 }); tone(1046.5, { type: "sine", dur: 0.6, vol: 0.13, at: 0.2 }); },
+  nope()  { tone(700, { type: "square", slide: 300, dur: 0.18, vol: 0.04 }); tone(500, { type: "square", slide: 220, dur: 0.2, vol: 0.04, at: 0.16 }); },
+  note(i) { tone(PENTA[i % PENTA.length], { dur: 0.35, vol: 0.12 }); tone(PENTA[i % PENTA.length] * 2, { type: "sine", dur: 0.25, vol: 0.03 }); },
+};
+const canHover = matchMedia("(hover: hover)").matches;
+const hoverSound = () => { if (ac && ac.state === "running") sfx.blip(); };
+
+// every tap wakes the audio up (browsers need a gesture first)
+document.addEventListener("pointerdown", audio, { capture: true });
+
+// ---------- title letters: each one is a xylophone key ----------
+const title = $("#title");
+const fills = ["#ffffff", "#ffb7d0", "#fff1a8", "#ffffff", "#ffb7d0", "#fff1a8", "#ffffff", "#ffb7d0"];
+[..."tomylove"].forEach((ch, i) => {
+  const s = document.createElement("span");
+  s.textContent = ch;
+  s.style.setProperty("--i", i);
+  s.style.setProperty("--fill", fills[i]);
+  s.setAttribute("aria-hidden", "true");
+  const play = () => {
+    audio(); sfx.note(i);
+    s.classList.remove("hit"); void s.offsetWidth; s.classList.add("hit");
+    burst(s);
+  };
+  s.addEventListener("pointerdown", play);
+  if (canHover) s.addEventListener("pointerenter", () => { if (ac && ac.state === "running") sfx.note(i); });
+  title.appendChild(s);
+});
+
+// ---------- sparkle trail ----------
+const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const SPARKS = ["✦", "♡", "✧", "⋆", "♥"];
+const COLORS = ["#f48fb4", "#ffcf4d", "#ffb7d0", "#ffd966"];
+function spark(x, y) {
+  if (reduced) return;
+  const el = document.createElement("span");
+  el.className = "spark";
+  el.textContent = SPARKS[Math.floor(Math.random() * SPARKS.length)];
+  el.style.left = x + "px";
+  el.style.top = y + "px";
+  el.style.color = COLORS[Math.floor(Math.random() * COLORS.length)];
+  el.style.setProperty("--dx", (Math.random() * 40 - 20) + "px");
+  el.style.fontSize = 10 + Math.random() * 12 + "px";
+  document.body.appendChild(el);
+  el.addEventListener("animationend", () => el.remove());
+}
+function burst(el) {
+  const r = el.getBoundingClientRect();
+  for (let k = 0; k < 6; k++) spark(r.left + r.width / 2 + (Math.random() * 40 - 20), r.top + r.height / 2 + (Math.random() * 30 - 15));
+}
+let lastSpark = 0;
+addEventListener("pointermove", (e) => {
+  const now = performance.now();
+  if (now - lastSpark < 45) return;
+  lastSpark = now;
+  spark(e.clientX, e.clientY);
+}, { passive: true });
+
+// ---------- toast ----------
+let toastTimer;
+function toast(msg) {
+  const t = $("#toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove("show"), 2200);
+}
+
+// ---------- sound toggle ----------
+function renderSound() {
+  $("#soundBtn").textContent = muted ? "🔈 sound off" : "🔊 sound on";
+  $("#traySound").textContent = muted ? "🔈" : "🔊";
+}
+function toggleSound() {
+  muted = !muted;
+  store.set("muted", muted ? "1" : "0");
+  renderSound();
+  audio(); sfx.pop();
+  toast(muted ? "shhh… sounds off" : "sounds on ♪");
+}
+$("#soundBtn").addEventListener("click", toggleSound);
+$("#traySound").addEventListener("click", toggleSound);
+renderSound();
+
+// ---------- patterns ----------
+const PATTERNS = [
+  ["plaid", "pink plaid ♡"],
+  ["gingham", "picnic gingham"],
+  ["checker", "checkerboard ✧"],
+  ["lemon", "lemon plaid ☀"],
+];
+let pIdx = Math.max(0, PATTERNS.findIndex(([p]) => p === store.get("pattern")));
+document.documentElement.dataset.pattern = PATTERNS[pIdx][0];
+function nextPattern() {
+  pIdx = (pIdx + 1) % PATTERNS.length;
+  document.documentElement.dataset.pattern = PATTERNS[pIdx][0];
+  store.set("pattern", PATTERNS[pIdx][0]);
+  sfx.boing();
+  toast(PATTERNS[pIdx][1]);
+}
+$("#patternBtn").addEventListener("click", nextPattern);
+
+// ---------- love notes ----------
+let noteIdx = Math.floor(Math.random() * NOTES.length);
+function showNote() {
+  noteIdx = (noteIdx + 1 + Math.floor(Math.random() * (NOTES.length - 1))) % NOTES.length;
+  const el = $("#noteText");
+  el.textContent = "";
+  const text = NOTES[noteIdx];
+  let i = 0;
+  clearInterval(showNote.timer);
+  showNote.timer = setInterval(() => {
+    el.textContent = text.slice(0, ++i);
+    if (i % 3 === 0) tone(1800 + Math.random() * 400, { type: "square", dur: 0.02, vol: 0.015 });
+    if (i >= text.length) clearInterval(showNote.timer);
+  }, reduced ? 0 : 35);
+}
+function openMail() {
+  closeStart();
+  $("#mailModal").classList.add("open");
+  sfx.mail();
+  showNote();
+}
+function closeMail() { $("#mailModal").classList.remove("open"); sfx.pop(); }
+$("#mailBtn").addEventListener("click", openMail);
+$("#nextNote").addEventListener("click", () => { sfx.pop(); showNote(); });
+document.querySelectorAll("[data-close]").forEach((b) => b.addEventListener("click", closeMail));
+$("#mailModal").addEventListener("click", (e) => { if (e.target.id === "mailModal") closeMail(); });
+addEventListener("keydown", (e) => { if (e.key === "Escape") { closeMail(); closeStart(); } });
+
+// ---------- the window buttons that refuse to work ----------
+document.querySelectorAll("[data-nope]").forEach((b) => b.addEventListener("click", () => {
+  const win = b.closest(".win");
+  win.classList.remove("shake"); void win.offsetWidth; win.classList.add("shake");
+  sfx.nope();
+  toast(NOPES[Math.floor(Math.random() * NOPES.length)]);
+}));
+
+// ---------- start menu ----------
+const startMenu = $("#startMenu"), startBtn = $("#startBtn");
+function closeStart() { startMenu.classList.remove("open"); startBtn.setAttribute("aria-expanded", "false"); }
+startBtn.addEventListener("click", (e) => {
+  e.stopPropagation();
+  const open = !startMenu.classList.contains("open");
+  startMenu.classList.toggle("open", open);
+  startBtn.setAttribute("aria-expanded", String(open));
+  open ? sfx.chime() : sfx.pop();
+});
+startMenu.addEventListener("click", (e) => {
+  const a = e.target.closest("[data-action]");
+  if (!a) return;
+  if (a.dataset.action === "mail") openMail();
+  if (a.dataset.action === "pattern") { nextPattern(); closeStart(); }
+});
+document.addEventListener("click", (e) => { if (!startMenu.contains(e.target) && e.target !== startBtn) closeStart(); });
+
+// ---------- app links: little chime, then go ----------
+document.querySelectorAll('a[href^="http"]').forEach((a) => {
+  if (canHover) a.addEventListener("pointerenter", hoverSound);
+  a.addEventListener("click", (e) => {
+    if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0 || muted) return;
+    e.preventDefault();
+    audio(); sfx.chime(); burst(a);
+    setTimeout(() => { location.href = a.href; }, 380);
+  });
+});
+document.querySelectorAll(".chip, .tb-btn").forEach((b) => { if (canHover) b.addEventListener("pointerenter", hoverSound); });
+
+// ---------- visit counter + clock ----------
+const visits = (parseInt(store.get("visits") || "0", 10) || 0) + 1;
+store.set("visits", String(visits));
+$("#counter").textContent = String(visits).padStart(6, "0");
+
+function tick() {
+  const d = new Date();
+  let h = d.getHours() % 12 || 12;
+  $("#clock").textContent = `${h}:${String(d.getMinutes()).padStart(2, "0")} ${d.getHours() < 12 ? "am" : "pm"}`;
+}
+tick(); setInterval(tick, 15000);
+</script>
+</body>
+</html>

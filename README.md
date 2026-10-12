@@ -1,4 +1,4 @@
-# tomylove ♡
+# For My Love ♡
 
 A tiny Y2K corner of the internet with all the little apps I make for her.
 
@@ -6,6 +6,7 @@ A tiny Y2K corner of the internet with all the little apps I make for her.
 
 - 📷 [photobooth](https://waffvil.github.io/photobooth/)
 - 🌫️ [fogged glass](https://waffvil.github.io/mv_screen_fog/)
+- 💌 [M ♡ V](https://waffvil.github.io/mimaimo-wurong/) (the "you've got mail" button)
 
 ## Adding a new app
 

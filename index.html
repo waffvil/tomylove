@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>tomylove ♡</title>
+<title>For My Love ♡</title>
 <meta name="description" content="a tiny corner of the internet, made just for you">
 <meta name="theme-color" content="#ffb7d0">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M32 56C10 40 4 28 12 18c6-7 15-6 20 2 5-8 14-9 20-2 8 10 2 22-20 38z' fill='%23ffb7d0' stroke='%236b3a55' stroke-width='5'/%3E%3C/svg%3E">
@@ -182,12 +182,13 @@
     margin: 4px 0 6px;
     font-family: var(--bubble);
     font-weight: 400;
-    font-size: clamp(54px, 15vw, 120px);
+    font-size: clamp(50px, 14vw, 104px);
     line-height: 1;
     letter-spacing: 1px;
     user-select: none;
   }
-  .title span {
+  .title .word { display: inline-block; margin: 0 .14em; }
+  .title .word span {
     display: inline-block;
     cursor: pointer;
     color: var(--fill, var(--white));
@@ -198,7 +199,7 @@
     animation-delay: calc(var(--i) * .12s);
     transition: transform .15s;
   }
-  .title span.hit { animation: jump .4s ease; }
+  .title .word span.hit { animation: jump .4s ease; }
   @keyframes wave {
     0%, 60%, 100% { transform: translateY(0); }
     30% { transform: translateY(-10px); }
@@ -227,10 +228,12 @@
     padding: 10px 16px;
     box-shadow: 3px 3px 0 var(--ink);
     cursor: pointer;
+    text-decoration: none;
     transition: transform .12s, box-shadow .12s, background .2s;
   }
-  .chip:nth-child(2) { background: var(--pink); }
-  .chip:nth-child(3) { background: var(--white); }
+  .chip:nth-child(2) { background: var(--white); }
+  .chip:nth-child(3) { background: var(--pink); }
+  .chip:nth-child(4) { background: var(--white); }
   .chip:hover { transform: translate(-1px,-2px) rotate(-2deg); box-shadow: 4px 5px 0 var(--ink); }
   .chip:active { transform: translate(3px,3px); box-shadow: none; }
 
@@ -464,7 +467,7 @@
   }
   @media (max-width: 520px) {
     .win-body { padding: 18px 14px; }
-    .title span { -webkit-text-stroke-width: 5px; text-shadow: 3px 3px 0 var(--ink); }
+    .title .word span { -webkit-text-stroke-width: 5px; text-shadow: 3px 3px 0 var(--ink); }
     .tb-btn { padding: 8px 10px; }
   }
 </style>
@@ -483,8 +486,8 @@
 
 <div class="marquee" aria-hidden="true">
   <div class="marquee-track">
-    <span>✧ welcome to tomylove ✧</span><span>♡ made just for you ♡</span><span>☆ best viewed holding my hand ☆</span><span>✿ new apps whenever i make you one ✿</span><span>⋆ you are my favourite person on the whole internet ⋆</span>
-    <span>✧ welcome to tomylove ✧</span><span>♡ made just for you ♡</span><span>☆ best viewed holding my hand ☆</span><span>✿ new apps whenever i make you one ✿</span><span>⋆ you are my favourite person on the whole internet ⋆</span>
+    <span>✧ welcome to for my love ✧</span><span>♡ made just for you ♡</span><span>☆ best viewed holding my hand ☆</span><span>✿ new apps whenever i make you one ✿</span><span>⋆ you are my favourite person on the whole internet ⋆</span>
+    <span>✧ welcome to for my love ✧</span><span>♡ made just for you ♡</span><span>☆ best viewed holding my hand ☆</span><span>✿ new apps whenever i make you one ✿</span><span>⋆ you are my favourite person on the whole internet ⋆</span>
   </div>
 </div>
 
@@ -500,11 +503,12 @@
       </div>
     </div>
     <div class="win-body">
-      <h1 class="title" id="title" aria-label="tomylove"></h1>
+      <h1 class="title" id="title" aria-label="For My Love"></h1>
       <p class="tagline">a tiny corner of the internet, made just for you<span class="blink">_</span></p>
       <p class="hint">(psst… tap the letters)</p>
       <div class="chips">
-        <button class="chip" type="button" id="mailBtn">💌 you've got mail</button>
+        <a class="chip" href="https://waffvil.github.io/mimaimo-wurong/" id="mailBtn">💌 you've got mail</a>
+        <button class="chip" type="button" id="noteBtn">📝 a little note</button>
         <button class="chip" type="button" id="patternBtn">🎀 change pattern</button>
         <button class="chip" type="button" id="soundBtn">🔊 sound on</button>
       </div>
@@ -583,10 +587,11 @@
 </main>
 
 <nav class="startmenu" id="startMenu" aria-label="start menu">
-  <div class="side">tomylove ♡</div>
+  <div class="side">for my love ♡</div>
   <a href="https://waffvil.github.io/photobooth/">📷 photobooth</a>
   <a href="https://waffvil.github.io/mv_screen_fog/">🌫️ fogged glass</a>
-  <button type="button" data-action="mail">💌 a little note</button>
+  <a href="https://waffvil.github.io/mimaimo-wurong/">💌 M ♡ V mail</a>
+  <button type="button" data-action="mail">📝 a little note</button>
   <button type="button" data-action="pattern">🎀 change pattern</button>
 </nav>
 
@@ -686,12 +691,19 @@ document.addEventListener("pointerdown", audio, { capture: true });
 
 // ---------- title letters: each one is a xylophone key ----------
 const title = $("#title");
-const fills = ["#ffffff", "#ffb7d0", "#fff1a8", "#ffffff", "#ffb7d0", "#fff1a8", "#ffffff", "#ffb7d0"];
-[..."tomylove"].forEach((ch, i) => {
+const fills = ["#ffffff", "#ffb7d0", "#fff1a8"];
+let i = 0;
+"For My Love".split(" ").forEach((word) => {
+  const w = document.createElement("span");
+  w.className = "word";
+  title.appendChild(w);
+  [...word].forEach((ch) => letter(ch, i++, w));
+});
+function letter(ch, i, parent) {
   const s = document.createElement("span");
   s.textContent = ch;
   s.style.setProperty("--i", i);
-  s.style.setProperty("--fill", fills[i]);
+  s.style.setProperty("--fill", fills[i % fills.length]);
   s.setAttribute("aria-hidden", "true");
   const play = () => {
     audio(); sfx.note(i);
@@ -700,8 +712,8 @@ const fills = ["#ffffff", "#ffb7d0", "#fff1a8", "#ffffff", "#ffb7d0", "#fff1a8",
   };
   s.addEventListener("pointerdown", play);
   if (canHover) s.addEventListener("pointerenter", () => { if (ac && ac.state === "running") sfx.note(i); });
-  title.appendChild(s);
-});
+  parent.appendChild(s);
+}
 
 // ---------- sparkle trail ----------
 const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -798,7 +810,7 @@ function openMail() {
   showNote();
 }
 function closeMail() { $("#mailModal").classList.remove("open"); sfx.pop(); }
-$("#mailBtn").addEventListener("click", openMail);
+$("#noteBtn").addEventListener("click", openMail);
 $("#nextNote").addEventListener("click", () => { sfx.pop(); showNote(); });
 document.querySelectorAll("[data-close]").forEach((b) => b.addEventListener("click", closeMail));
 $("#mailModal").addEventListener("click", (e) => { if (e.target.id === "mailModal") closeMail(); });

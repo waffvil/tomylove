@@ -1173,8 +1173,9 @@ function render(k) {
   k.ctx.clearRect(0, 0, GW, GH);
   k.ctx.drawImage(k.frames[k.frame], 0, 0);
   k.cv.style.transform = k.dir < 0 ? "scaleX(-1)" : "";
-  const bob = k.state === "walk" && k.frame ? -2 : 0;
-  k.el.style.transform = `translate(${k.x}px, ${k.y + bob}px)`;
+  const bob = (k.state === "walk" || k.state === "goto") && k.frame ? -2 : 0;
+  const tilt = k.state === "climb" ? (k.frame ? 7 : -7) : 0;
+  k.el.style.transform = `translate(${k.x}px, ${k.y + bob}px) rotate(${tilt}deg)`;
 }
 
 function enter(k, fromX = null) {
@@ -1184,6 +1185,7 @@ function enter(k, fromX = null) {
   k.dir = Math.random() < 0.5 ? 1 : -1;
   k.x = fromX ?? (k.dir > 0 ? -size : innerWidth);
   k.y = 0;
+  k.plat = null;
   k.leaving = false;
   k.state = "walk";
   render(k);
@@ -1206,6 +1208,7 @@ function tuckIn(k, quiet = false) {
   if (k.state === "asleep") return;
   if (!k.el.hidden) burst(k.cv);
   k.el.hidden = true;
+  k.plat = null;
   k.state = "asleep";
   sleepLog[k.id] = Date.now();
   saveSleep();
@@ -1292,7 +1295,7 @@ KIDS.forEach((k) => {
   teddyLayer.appendChild(el);
   Object.assign(k, {
     el, cv, bubble, ctx: cv.getContext("2d"),
-    x: 0, y: 0, vy: 0, dir: 1, frame: 0, frameT: 0, until: 0, boostUntil: 0,
+    x: 0, y: 0, vx: 0, vy: 0, dir: 1, plat: null, target: null, frame: 0, frameT: 0, until: 0, boostUntil: 0,
     speed: 32 + Math.random() * 20, leaving: false, meetCool: 0, awakeSince: performance.now(),
   });
 
@@ -1309,6 +1312,7 @@ KIDS.forEach((k) => {
     if (!drag.moved && Math.hypot(e.clientX - drag.sx, e.clientY - drag.sy) > 6) {
       drag.moved = true;
       k.state = "drag";
+      k.plat = null;
       el.classList.add("dragging");
       audio(); squeak();
       say(k, pick(["wheee!", "put me down papa!", "mama i'm flying", "bed time?"]), 1400);
@@ -1328,33 +1332,134 @@ KIDS.forEach((k) => {
     const bed = document.elementsFromPoint(e.clientX, e.clientY).map((n) => n.closest(".bed")).find(Boolean);
     if (bed && bed.dataset.kid === k.id) return tuckIn(k);
     if (bed) say(k, "that's not my bed!");
-    k.state = "fall"; k.vy = 0;
+    startFall(k);
   };
   el.addEventListener("pointerup", drop);
   el.addEventListener("pointercancel", drop);
 });
 
+// things they can climb onto and walk along the top of
+const PERCHES = ".win, .app";
+let layerTop = 0;
+const perches = () => [...document.querySelectorAll(PERCHES)].filter((el) => !el.closest(".modal"));
+const topOf = (el) => el.getBoundingClientRect().top - layerTop; // in the kids' coordinates: 0 = ground, negative = up
+
+// where a kid can walk on whatever she is standing on
+function walkRange(k, size) {
+  if (!k.plat) return [0, innerWidth - size];
+  const r = k.plat.getBoundingClientRect();
+  return [r.left - size * 0.25, r.right - size * 0.75];
+}
+
+function tryClimb(k) {
+  const size = k.el.offsetWidth;
+  const [lo, hi] = walkRange(k, size);
+  const options = [];
+  perches().forEach((el) => {
+    if (el === k.plat) return;
+    const r = el.getBoundingClientRect();
+    const top = r.top - layerTop;
+    if (r.top < 70 || top > k.y - 50) return; // must be on screen and above her
+    [["left", r.left - size * 0.5], ["right", r.right - size * 0.5]].forEach(([side, tx]) => {
+      if (tx >= lo - size * 0.5 && tx <= hi + size * 0.5) options.push({ el, side, tx });
+    });
+  });
+  if (!options.length) return false;
+  k.target = pick(options);
+  k.state = "goto";
+  return true;
+}
+
+function startFall(k, vx = 0, vy = 0) {
+  k.plat = null;
+  k.state = "fall";
+  k.vx = vx; k.vy = vy;
+}
+
 function update(k, now, dt) {
   if (k.state === "off" || k.state === "asleep") return;
+  const size = k.el.offsetWidth;
+
   if (k.state === "drag") {
     k.frameT += dt;
     if (k.frameT > 0.08) { k.frameT = 0; k.frame ^= 1; render(k); }
     return;
   }
+
+  // ride along with whatever she is standing on (it moves when the page scrolls)
+  if (k.plat && k.state !== "fall") {
+    const r = k.plat.getBoundingClientRect();
+    if (r.top - layerTop > 0 || r.width === 0) { k.plat = null; k.y = 0; }
+    else if (r.top < 20) startFall(k);
+    else k.y = r.top - layerTop;
+  }
+
   if (k.state === "fall") {
+    const before = k.y;
     k.vy += 1800 * dt;
     k.y += k.vy * dt;
-    if (k.y >= 0) {
-      k.y = 0; k.frame = 0;
-      k.state = "pause"; k.until = now + 800;
-      if (!k.bubble.classList.contains("show")) say(k, pick(["oof!", "again again!", "hehe"]));
+    k.x = Math.min(Math.max(k.x + k.vx * dt, -size * 0.5), innerWidth - size * 0.5);
+    if (k.vy > 0) {
+      const cx = k.x + size / 2;
+      const land = perches().find((el) => {
+        const r = el.getBoundingClientRect();
+        const top = r.top - layerTop;
+        return top < -20 && top >= before && top <= k.y && cx > r.left + 6 && cx < r.right - 6;
+      });
+      if (land) { k.plat = land; k.y = topOf(land); }
+      else if (k.y >= 0) { k.plat = null; k.y = 0; }
+      if (land || k.y === 0) {
+        k.frame = 0; k.vx = 0;
+        k.state = "pause"; k.until = now + 700;
+        if (!k.bubble.classList.contains("show") && Math.random() < 0.5) say(k, pick(["oof!", "again again!", "hehe", "ta-da!"]));
+      }
     }
     return render(k);
   }
+
   if (k.state === "pause") {
     if (now >= k.until) k.state = "walk";
     if (k.frame) { k.frame = 0; render(k); }
-    return;
+    return render(k);
+  }
+
+  if (k.state === "goto") {
+    const t = k.target;
+    const r = t.el.getBoundingClientRect();
+    if (r.top < 70 || r.top - layerTop > k.y - 30) { k.state = "walk"; return; }
+    t.tx = (t.side === "left" ? r.left : r.right) - size * 0.5;
+    const dx = t.tx - k.x;
+    if (Math.abs(dx) < 3) {
+      k.x = t.tx;
+      k.state = "climb";
+      say(k, pick(["climbing!", "mama look how high", "bố ơi watch me", "up up up"]), 1500);
+      return;
+    }
+    k.dir = dx > 0 ? 1 : -1;
+    k.x += k.dir * Math.min(Math.abs(dx), k.speed * 1.4 * dt);
+    k.frameT += dt;
+    if (k.frameT > 0.18) { k.frameT = 0; k.frame ^= 1; }
+    return render(k);
+  }
+
+  if (k.state === "climb") {
+    const t = k.target;
+    const r = t.el.getBoundingClientRect();
+    const top = r.top - layerTop;
+    if (r.top < 20 || top > k.y + 4) { startFall(k); return; }
+    k.y -= 62 * dt;
+    k.frameT += dt;
+    if (k.frameT > 0.16) { k.frameT = 0; k.frame ^= 1; }
+    if (k.y <= top) {
+      k.y = top;
+      k.plat = t.el;
+      k.x = t.side === "left" ? r.left - size * 0.2 : r.right - size * 0.8;
+      k.dir = t.side === "left" ? 1 : -1;
+      k.frame = 0;
+      retrigger(k.cv, "hop");
+      k.state = "pause"; k.until = now + 900;
+    }
+    return render(k);
   }
 
   // random little things they do while walking
@@ -1374,7 +1479,9 @@ function update(k, now, dt) {
       retrigger(k.cv, "trip");
       k.state = "pause"; k.until = now + 1300;
       say(k, pick(["oops!", "ow…", "i'm ok!"]));
-    } else if (r < 0.29 && now - k.awakeSince > 90000) {
+    } else if (r < 0.34) {
+      if (tryClimb(k)) return;
+    } else if (r < 0.35 && now - k.awakeSince > 90000) {
       say(k, "*yawn* sleepy…", 1500);
       k.state = "pause"; k.until = now + 1700;
       setTimeout(() => { if (k.state === "pause" || k.state === "walk") tuckIn(k, true); }, 1500);
@@ -1382,9 +1489,9 @@ function update(k, now, dt) {
     }
   }
 
-  // bump into a sibling: stop for a hug
+  // bump into a sister on the same spot: stop for a hug
   if (now > k.meetCool) {
-    const o = KIDS.find((o) => o !== k && o.state === "walk" && now > o.meetCool && Math.abs(o.x - k.x) < 44);
+    const o = KIDS.find((o) => o !== k && o.state === "walk" && o.plat === k.plat && now > o.meetCool && Math.abs(o.x - k.x) < 44);
     if (o) {
       k.dir = o.x > k.x ? 1 : -1; o.dir = -k.dir;
       k.state = o.state = "pause";
@@ -1403,7 +1510,19 @@ function update(k, now, dt) {
   k.frameT += dt;
   if (k.frameT > (boosted ? 0.1 : 0.22)) { k.frameT = 0; k.frame ^= 1; }
 
-  const size = k.el.offsetWidth;
+  if (k.plat) {
+    // end of the ledge: turn back, or jump off
+    const [lo, hi] = walkRange(k, size);
+    if ((k.dir < 0 && k.x <= lo) || (k.dir > 0 && k.x >= hi)) {
+      if (Math.random() < 0.5) { k.dir *= -1; k.x = Math.min(Math.max(k.x, lo), hi); }
+      else {
+        startFall(k, k.dir * 90, -280);
+        if (Math.random() < 0.6) say(k, pick(["wheee!", "jump!", "catch me papa!"]), 1200);
+      }
+    }
+    return render(k);
+  }
+
   if (!k.leaving && ((k.dir < 0 && k.x <= 0) || (k.dir > 0 && k.x >= innerWidth - size))) {
     if (Math.random() < 0.65) k.dir *= -1; else k.leaving = true;
   }
@@ -1415,6 +1534,7 @@ let lastFrame = performance.now();
 function loop(now) {
   const dt = Math.min(now - lastFrame, 100) / 1000;
   lastFrame = now;
+  layerTop = teddyLayer.getBoundingClientRect().top;
   KIDS.forEach((k) => update(k, now, dt));
   requestAnimationFrame(loop);
 }

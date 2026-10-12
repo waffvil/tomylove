@@ -600,6 +600,14 @@
     opacity: 0; transition: opacity .15s, transform .15s; pointer-events: none;
   }
   .bed .bubble.show { opacity: 1; transform: translate(-50%, -4px) scale(1); }
+  /* let speech poke out of the window, and keep the end beds' bubbles on screen */
+  .nursery { overflow: visible; }
+  .nursery .titlebar { border-radius: 11px 11px 0 0; }
+  .nursery .win-body { border-radius: 0 0 11px 11px; }
+  .bed:first-child .bubble { left: 0; transform: translate(0, 6px) scale(.8); transform-origin: left bottom; }
+  .bed:first-child .bubble.show { transform: translate(0, -4px) scale(1); }
+  .bed:last-child .bubble { left: auto; right: 0; transform: translate(0, 6px) scale(.8); transform-origin: right bottom; }
+  .bed:last-child .bubble.show { transform: translate(0, -4px) scale(1); }
 
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation: none !important; transition: none !important; }

@@ -336,6 +336,7 @@
   .badge.b2 { background: var(--yellow); }
   .badge.b3 { background: var(--ink); color: var(--pink); }
   .badge.b4 { background: repeating-linear-gradient(90deg, var(--pink-soft) 0 6px, var(--yellow) 6px 12px); }
+  .vi { font: 800 15px/1.3 var(--body); }
   .counter {
     display: inline-block;
     background: #2b1b24;
@@ -486,8 +487,8 @@
 
 <div class="marquee" aria-hidden="true">
   <div class="marquee-track">
-    <span>✧ welcome to for my love ✧</span><span>♡ made just for you ♡</span><span>☆ best viewed holding my hand ☆</span><span>✿ new apps whenever i make you one ✿</span><span>⋆ you are my favourite person on the whole internet ⋆</span>
-    <span>✧ welcome to for my love ✧</span><span>♡ made just for you ♡</span><span>☆ best viewed holding my hand ☆</span><span>✿ new apps whenever i make you one ✿</span><span>⋆ you are my favourite person on the whole internet ⋆</span>
+    <span>✧ welcome to my beautiful princess ✧</span><span>♡ made just for you ♡</span><span>☆ best viewed holding my hand ☆</span><span>✿ new apps whenever you want one ✿</span><span>⋆ you are my favourite person in da ENTIRE WORLD ⋆</span>
+    <span>✧ welcome to my beautiful princess ✧</span><span>♡ made just for you ♡</span><span>☆ best viewed holding my hand ☆</span><span>✿ new apps whenever you want one ✿</span><span>⋆ you are my favourite person in da ENTIRE WORLD ⋆</span>
   </div>
 </div>
 
@@ -580,9 +581,9 @@
       <div class="badge b3">✧ y2k 4ever ✧</div>
       <div class="badge b4">100% cute</div>
     </div>
-    <div>you've visited</div>
-    <div class="counter" id="counter">000001</div>
-    <div>times ♡ (i'm counting)</div>
+    <div class="vi">vợ + chồng have visited</div>
+    <div class="counter" id="counter">♡♡♡♡♡♡</div>
+    <div>times ♡ (we're counting)</div>
   </footer>
 </main>
 
@@ -625,18 +626,18 @@
 <script>
 // ---------- edit these to make it yours ----------
 const NOTES = [
-  "you make every ordinary day feel like a sleepover ♡",
-  "i made this whole website just so you'd have somewhere cute to go",
-  "reminder: you are my favourite person on the whole internet",
-  "if you're reading this, i'm probably thinking about you right now",
-  "you + me = best duo. no notes. (well, except these ones)",
-  "go take a photo strip, i want to see that face",
-  "breathe on the fog window and draw me a heart ok?",
+  "i made this whole website just so you could have somewhere cute to go. my beautiful princess. i love you so muchie ♡",
+  "reminder: you are my favorite person in da entire world",
+  "if you're reading this, i'm probably thinking about you right now. actually, i'm always thinking about you",
+  "you + me = M + V. forever and ever and ever",
+  "go see the app i made you. baby, it's so beautiful. make sure to take lots of pictures. otay?",
+  "vo yeuuu heheh depp quaaa nhoo nhieuu lam",
+  "babyyyy pleaseeee may i have a heart on the windowww hehehe",
 ];
 const NOPES = [
   "nope, you're stuck with me ♡",
-  "this window cannot be closed. it loves you too much",
-  "error 143: too much love to close",
+  "this window cannot be closed. hubby yeu em too much",
+  "error 161025: too much love to close",
   "nice try ✧",
 ];
 // --------------------------------------------------
@@ -855,9 +856,20 @@ document.querySelectorAll('a[href^="http"]').forEach((a) => {
 document.querySelectorAll(".chip, .tb-btn").forEach((b) => { if (canHover) b.addEventListener("pointerenter", hoverSound); });
 
 // ---------- visit counter + clock ----------
-const visits = (parseInt(store.get("visits") || "0", 10) || 0) + 1;
-store.set("visits", String(visits));
-$("#counter").textContent = String(visits).padStart(6, "0");
+// shared between both of us: lives in the M+V supabase, bumped once per browser session
+(async () => {
+  let bump = true;
+  try { bump = !sessionStorage.getItem("tomylove.counted"); sessionStorage.setItem("tomylove.counted", "1"); } catch {}
+  try {
+    const res = await fetch("https://cnsfzyqyvqwzwsmsqyqz.supabase.co/rest/v1/rpc/tomylove_visit", {
+      method: "POST",
+      headers: { apikey: "sb_publishable_9wg3dN1xoj7qoGsXlCKV1A_6Faors8Y", "Content-Type": "application/json" },
+      body: JSON.stringify({ p_bump: bump }),
+    });
+    const n = await res.json();
+    if (Number.isFinite(n)) $("#counter").textContent = String(n).padStart(6, "0");
+  } catch {}
+})();
 
 function tick() {
   const d = new Date();

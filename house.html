@@ -1,0 +1,1287 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>the girls' house ♡</title>
+<meta name="description" content="mivi, vimi and teddy's little house">
+<meta name="theme-color" content="#ffb7d0">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M32 56C10 40 4 28 12 18c6-7 15-6 20 2 5-8 14-9 20-2 8 10 2 22-20 38z' fill='%23ffb7d0' stroke='%236b3a55' stroke-width='5'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=Pixelify+Sans:wght@400;600&family=Nunito:wght@600;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --pink: #ffb7d0;
+    --pink-deep: #f48fb4;
+    --pink-soft: #ffe1ec;
+    --yellow: #fff1a8;
+    --yellow-deep: #ffd966;
+    --cream: #fffaf0;
+    --ink: #6b3a55;
+    --white: #ffffff;
+    --pixel: "Pixelify Sans", ui-monospace, monospace;
+    --bubble: "Bagel Fat One", "Nunito", system-ui, sans-serif;
+    --body: "Nunito", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    min-height: 100vh;
+    color: var(--ink);
+    font-family: var(--body);
+    background-color: #fff3c4;
+    background-image:
+      repeating-linear-gradient(0deg,
+        rgba(255,170,200,.38) 0 34px, transparent 34px 50px,
+        rgba(255,255,255,.85) 50px 52px, transparent 52px 55px,
+        rgba(255,255,255,.85) 55px 57px, transparent 57px 60px,
+        rgba(255,255,255,.85) 60px 62px, transparent 62px 90px,
+        rgba(255,205,90,.55) 90px 94px, transparent 94px 120px),
+      repeating-linear-gradient(90deg,
+        rgba(255,170,200,.38) 0 34px, transparent 34px 50px,
+        rgba(255,255,255,.85) 50px 52px, transparent 52px 55px,
+        rgba(255,255,255,.85) 55px 57px, transparent 57px 60px,
+        rgba(255,255,255,.85) 60px 62px, transparent 62px 90px,
+        rgba(255,205,90,.55) 90px 94px, transparent 94px 120px);
+    padding: 10px 10px calc(14px + env(safe-area-inset-bottom));
+    -webkit-tap-highlight-color: transparent;
+    overflow-x: hidden;
+  }
+
+  .top { display: flex; align-items: center; gap: 8px; margin: 0 auto 10px; max-width: 1400px; }
+  .top h1 { flex: 1; margin: 0; font: 400 clamp(20px, 5vw, 30px)/1 var(--bubble); color: var(--white);
+    -webkit-text-stroke: 5px var(--ink); paint-order: stroke fill; text-shadow: 3px 3px 0 var(--ink); }
+  .pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    font: 600 14px/1 var(--pixel); color: var(--ink); text-decoration: none;
+    background: var(--yellow); border: 2px solid var(--ink); border-radius: 999px;
+    padding: 8px 12px; box-shadow: 2px 2px 0 var(--ink); cursor: pointer;
+  }
+  .pill.white { background: var(--white); }
+  .pill:active { transform: translate(2px,2px); box-shadow: none; }
+
+  .win {
+    max-width: 1400px; margin: 0 auto;
+    background: var(--cream);
+    border: 3px solid var(--ink); border-radius: 14px;
+    box-shadow: 5px 5px 0 var(--ink);
+    overflow: hidden;
+  }
+  .titlebar {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 10px;
+    background: linear-gradient(90deg, var(--pink) 0%, #ffd0de 55%, var(--yellow) 100%);
+    border-bottom: 3px solid var(--ink);
+    font: 600 14px/1.2 var(--pixel);
+  }
+  .titlebar .name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #clock { font: 600 14px/1 var(--pixel); }
+
+  .stage-wrap { overflow-x: auto; overflow-y: hidden; background: var(--pink-soft); scrollbar-width: thin; }
+  .stage { position: relative; margin: 0 auto; touch-action: none; user-select: none; -webkit-user-select: none; }
+  .stage canvas { display: block; width: 100%; height: 100%; image-rendering: pixelated; cursor: pointer; }
+  .overlay { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+  .bubble {
+    position: absolute; transform: translate(-50%, -100%) scale(.8);
+    white-space: nowrap;
+    background: var(--white); border: 2px solid var(--ink); border-radius: 12px;
+    padding: 4px 8px;
+    font: 800 13px/1.2 var(--body); color: var(--ink);
+    box-shadow: 2px 2px 0 var(--ink);
+    opacity: 0; transition: opacity .15s, transform .15s;
+  }
+  .bubble.show { opacity: 1; transform: translate(-50%, -100%) scale(1); }
+  .tag {
+    position: absolute; transform: translate(-50%, 0);
+    font: 600 12px/1 var(--pixel); color: var(--ink);
+    background: var(--yellow); border: 2px solid var(--ink); border-radius: 999px;
+    padding: 2px 7px; white-space: nowrap; opacity: 0; transition: opacity .2s;
+  }
+  .tag.show { opacity: 1; }
+
+  .hint { margin: 0; padding: 8px 12px; font: 600 13px/1.3 var(--pixel); border-top: 3px solid var(--ink); background: var(--pink-soft); }
+
+  .cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; padding: 10px; }
+  .kcard {
+    background: var(--white); border: 3px solid var(--ink); border-radius: 14px;
+    box-shadow: 3px 3px 0 var(--ink);
+    padding: 8px; display: grid; gap: 6px;
+    cursor: pointer;
+    transition: transform .15s, background .2s;
+  }
+  .kcard.sel { background: #fff6c9; transform: translateY(-2px); }
+  .khead { display: flex; align-items: center; gap: 8px; min-width: 0; }
+  .khead canvas { width: 40px; height: 42px; image-rendering: pixelated; flex: none; }
+  .kname { font: 400 20px/1 var(--bubble); }
+  .kact { font: 600 12px/1.2 var(--pixel); opacity: .85; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .kmood { margin-left: auto; font-size: 20px; }
+  .bars { display: grid; grid-template-columns: auto 1fr; gap: 3px 6px; align-items: center; font-size: 12px; }
+  .bar { height: 8px; border: 2px solid var(--ink); border-radius: 999px; background: var(--cream); overflow: hidden; }
+  .bar i { display: block; height: 100%; background: var(--pink-deep); transition: width .4s; }
+  .bar.e i { background: #9db8ff; } .bar.f i { background: var(--yellow-deep); } .bar.l i { background: #ff7fa8; }
+  .kbtns { display: flex; flex-wrap: wrap; gap: 4px; }
+  .kbtns button {
+    flex: 1 1 auto;
+    font: 600 12px/1 var(--pixel); color: var(--ink);
+    background: var(--pink-soft); border: 2px solid var(--ink); border-radius: 8px;
+    padding: 6px 4px; cursor: pointer; box-shadow: 2px 2px 0 var(--ink);
+  }
+  .kbtns button:active { transform: translate(2px,2px); box-shadow: none; }
+
+  @media (max-width: 640px) {
+    .cards { grid-template-columns: 1fr; }
+    .kcard { grid-template-columns: 1fr 1fr; align-items: center; }
+    .khead { grid-column: 1 / -1; }
+  }
+</style>
+</head>
+<body>
+
+<div class="top">
+  <a class="pill" href="./">← back</a>
+  <h1>the girls' house</h1>
+  <button class="pill white" type="button" id="soundBtn">🔊</button>
+</div>
+
+<div class="win">
+  <div class="titlebar">
+    <span>🏠</span><span class="name">house.exe — mivi, vimi &amp; teddy</span>
+    <span id="clock"></span>
+  </div>
+  <div class="stage-wrap" id="wrap">
+    <div class="stage" id="stage">
+      <canvas id="scene" width="384" height="216" aria-label="the girls' house"></canvas>
+      <div class="overlay" id="overlay"></div>
+    </div>
+  </div>
+  <p class="hint">tap a girl to play · drag her anywhere · tap the fridge, tv, ball, flowers or swing ✿</p>
+  <div class="cards" id="cards"></div>
+</div>
+
+<script src="kids.js"></script>
+<script>
+// ======================================================================
+// the girls' house: a little cut-away dollhouse they live in.
+// they choose what to do from how hungry / sleepy / bored / loved they are,
+// it follows the real clock (they go to bed at night), and remembers everything.
+// ======================================================================
+
+const $ = (s) => document.querySelector(s);
+const store = {
+  get(k) { try { return localStorage.getItem("tomylove." + k); } catch { return null; } },
+  set(k, v) { try { localStorage.setItem("tomylove." + k, v); } catch {} },
+};
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const rand = (a, b) => a + Math.random() * (b - a);
+const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+// ---------- sounds (only when you touch things, never on their own) ----------
+let ac = null;
+let muted = store.get("muted") === "1";
+function audio() {
+  if (!ac) { try { ac = new (window.AudioContext || window.webkitAudioContext)(); } catch { return null; } }
+  if (ac.state === "suspended") ac.resume();
+  return ac;
+}
+function tone(freq, { type = "triangle", dur = 0.15, vol = 0.12, at = 0, slide = null } = {}) {
+  if (muted || !ac) return;
+  const t = ac.currentTime + at;
+  const o = ac.createOscillator(), g = ac.createGain();
+  o.type = type;
+  o.frequency.setValueAtTime(freq, t);
+  if (slide) o.frequency.exponentialRampToValueAtTime(slide, t + dur);
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(vol, t + 0.012);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  o.connect(g).connect(ac.destination);
+  o.start(t); o.stop(t + dur + 0.03);
+}
+const sfx = {
+  squeak() { tone(1250, { type: "sine", slide: 1750, dur: 0.09, vol: 0.12 }); tone(1500, { type: "sine", slide: 2100, dur: 0.1, vol: 0.1, at: 0.11 }); },
+  pop()    { tone(500, { type: "sine", slide: 1100, dur: 0.09, vol: 0.14 }); },
+  boing()  { tone(180, { slide: 520, dur: 0.22, vol: 0.12 }); },
+  kick()   { tone(160, { type: "sine", slide: 90, dur: 0.12, vol: 0.2 }); },
+  water()  { [900, 1100, 1300].forEach((f, i) => tone(f, { type: "sine", slide: f * 0.7, dur: 0.08, vol: 0.06, at: i * 0.06 })); },
+  tv()     { tone(2400, { type: "square", dur: 0.05, vol: 0.03 }); tone(60, { type: "sawtooth", dur: 0.15, vol: 0.04 }); },
+  fridge() { tone(330, { dur: 0.1, vol: 0.08 }); tone(440, { dur: 0.12, vol: 0.08, at: 0.08 }); },
+  lullaby() { [523.25, 523.25, 783.99, 783.99, 880, 880, 783.99].forEach((f, i) => tone(f, { type: "sine", dur: 0.55, vol: 0.07, at: i * 0.3 })); },
+};
+document.addEventListener("pointerdown", audio, { capture: true });
+function renderSound() { $("#soundBtn").textContent = muted ? "🔈" : "🔊"; }
+$("#soundBtn").addEventListener("click", () => { muted = !muted; store.set("muted", muted ? "1" : "0"); renderSound(); audio(); sfx.pop(); });
+renderSound();
+
+// ---------- the world ----------
+const W = 384, H = 216;
+const FLOOR = [196, 124];                 // feet height of the ground floor and upstairs
+const RANGE = [[8, 376], [60, 290]];      // where they can walk on each floor
+const HOLE = [268, 284];                  // the ladder hole in the upstairs floor
+const LADDER = 276;
+const BEDS = { rose: 54, blossom: 98, teddy: 142 };   // left edge of each girl's bed
+const SEATS_TABLE = [{ x: 98, dir: 1 }, { x: 120, dir: 1, behind: true }, { x: 142, dir: -1 }];
+const SEATS_SOFA = [182, 200, 218];
+const SWING = { px: 361, py: 134, len: 44 };
+const INK = "#4a2b3a";
+const PAINT = {
+  rose: ["#e2405a", "#ffb7d0", "#86b35a", "#fff1a8"],
+  blossom: ["#f28aa2", "#fff1a8", "#7a9a62", "#cdb39c"],
+  teddy: ["#c7a385", "#f6aaa0", "#4a2a24", "#ffd966"],
+};
+
+const canvas = $("#scene");
+const ctx = canvas.getContext("2d");
+ctx.imageSmoothingEnabled = false;
+
+const world = {
+  tv: false, tvT: 0,
+  fridgeT: 0,
+  ball: { x: 250, h: 0, vx: 0, vh: 0 },
+  swing: { a: 0, v: 0 },
+  flowers: [1.5, 2, 1, 2.5],
+  easel: null, brush: { x: 7, y: 6 },
+  parts: [],
+  clouds: [{ x: 30, y: 30, s: 1 }, { x: 170, y: 18, s: 0.7 }, { x: 300, y: 40, s: 0.9 }],
+  t: 0,
+};
+const EASEL_W = 14, EASEL_H = 11;
+const blankEasel = () => new Array(EASEL_W * EASEL_H).fill(null);
+world.easel = blankEasel();
+
+// ---------- time of day (the real clock) ----------
+function hourNow() { const d = new Date(); return d.getHours() + d.getMinutes() / 60 + d.getSeconds() / 3600; }
+const isNight = () => { const h = hourNow(); return h >= 22 || h < 7; };
+const SKY = [ // hour, top colour, bottom colour, darkness
+  [0, "#1f1838", "#3a2a5a", 0.5], [5, "#2a2048", "#4a3466", 0.45], [6.5, "#f4a6c1", "#ffe0b8", 0.12],
+  [8, "#bfe3ff", "#fff3d6", 0], [17, "#c9e4ff", "#fff0d0", 0], [18.7, "#ffb48f", "#ffe3a8", 0.08],
+  [19.8, "#e0739f", "#ffc0a8", 0.2], [21, "#3a2a5c", "#6b3a6b", 0.42], [24, "#1f1838", "#3a2a5a", 0.5],
+];
+const hex = (c) => [1, 3, 5].map((i) => parseInt(c.slice(i, i + 2), 16));
+const mix = (a, b, t) => { const A = hex(a), B = hex(b); return `rgb(${A.map((v, i) => Math.round(v + (B[i] - v) * t)).join(",")})`; };
+function skyNow() {
+  const h = hourNow();
+  for (let i = 0; i < SKY.length - 1; i++) {
+    const [h0, t0, b0, d0] = SKY[i], [h1, t1, b1, d1] = SKY[i + 1];
+    if (h >= h0 && h < h1) {
+      const t = (h - h0) / (h1 - h0);
+      return { top: mix(t0, t1, t), bottom: mix(b0, b1, t), dark: d0 + (d1 - d0) * t };
+    }
+  }
+  return { top: SKY[0][1], bottom: SKY[0][2], dark: SKY[0][3] };
+}
+
+// ---------- tiny pixel drawing helpers ----------
+function R(c, x, y, w, h, g = ctx) { g.fillStyle = c; g.fillRect(x, y, w, h); }
+function box(g, x, y, w, h, fill) { R(INK, x, y, w, h, g); R(fill, x + 1, y + 1, w - 2, h - 2, g); }
+function pixels(g, rows, x, y, colors) {
+  rows.forEach((row, j) => [...row].forEach((ch, i) => { if (ch !== "." && colors[ch]) R(colors[ch], x + i, y + j, 1, 1, g); }));
+}
+function gingham(g, x, y, w, h, base, check, size = 4) {
+  R(base, x, y, w, h, g);
+  for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) {
+    const a = Math.floor((x + i) / size) % 2, b = Math.floor((y + j) / size) % 2;
+    if (a || b) R(check, x + i, y + j, 1, 1, g);
+  }
+}
+function plaidLines(g, x, y, w, h, base, line) {
+  R(base, x, y, w, h, g);
+  for (let i = 0; i < w; i++) { const m = (x + i) % 14; if (m === 0 || m === 2 || m === 4 || m === 9) R(line, x + i, y, 1, h, g); }
+  for (let j = 0; j < h; j++) { const m = (y + j) % 14; if (m === 0 || m === 2 || m === 4 || m === 9) R(line, x, y + j, w, 1, g); }
+}
+function stripes(g, x, y, w, h, base, line, every = 6) {
+  R(base, x, y, w, h, g);
+  for (let i = 0; i < w; i++) if ((x + i) % every < 2) R(line, x + i, y, 1, h, g);
+}
+
+const HEART = [".x.x.", "xxxxx", ".xxx.", "..x.."];
+const NOTE = [".xx", ".x.", ".x.", "xx."];
+const ZED = ["xxx", "..x", ".x.", "xxx"];
+const DROP = [".x.", "xxx", ".x."];
+
+// ---------- the house itself (drawn once, the sky shows through) ----------
+const bg = document.createElement("canvas");
+bg.width = W; bg.height = H;
+(function drawHouse() {
+  const g = bg.getContext("2d");
+  // far hills
+  for (let x = 0; x < W; x++) {
+    const h1 = 172 + Math.round(Math.sin(x / 28) * 6 + Math.sin(x / 11) * 2);
+    R("#cfe9b8", x, h1, 1, 196 - h1, g);
+    const h2 = 182 + Math.round(Math.sin(x / 19 + 2) * 4);
+    R("#b9dfa0", x, h2, 1, 196 - h2, g);
+  }
+  // ground
+  R("#a8d88a", 0, 196, W, 4, g); R("#86bf6b", 0, 196, W, 1, g);
+  R("#e7c49d", 0, 200, W, 16, g);
+  for (let i = 0; i < 70; i++) R(i % 2 ? "#d9b083" : "#f0d4b0", (i * 53) % W, 202 + ((i * 7) % 13), 2, 1, g);
+
+  // picket fence in the garden
+  for (let x = 302; x < W; x += 7) { box(g, x, 180, 5, 16, "#fffaf2"); R(INK, x + 2, 179, 1, 1, g); }
+  R(INK, 300, 185, W - 300, 1, g); R("#fffaf2", 300, 186, W - 300, 2, g); R(INK, 300, 188, W - 300, 1, g);
+
+  // cherry blossom tree with a branch for the swing
+  box(g, 338, 124, 9, 72, "#b98a63");
+  R("#a0734f", 341, 130, 2, 60, g);
+  box(g, 344, 131, 30, 5, "#b98a63");
+  [[342, 104, 25, "#ffc4d6"], [320, 116, 15, "#ffb7d0"], [366, 112, 16, "#ffc9da"], [350, 92, 15, "#ffd3e2"], [330, 92, 12, "#ffc4d6"]].forEach(([cx, cy, r, c]) => {
+    for (let y = -r - 1; y <= r + 1; y++) for (let x = -r - 1; x <= r + 1; x++) {
+      const d = x * x + y * y;
+      if (d <= r * r) R(c, cx + x, cy + y, 1, 1, g);
+      else if (d <= (r + 1) * (r + 1)) R(INK, cx + x, cy + y, 1, 1, g);
+    }
+  });
+  for (let i = 0; i < 40; i++) R(i % 3 ? "#ff9fbf" : "#fff", 312 + (i * 37) % 60, 84 + (i * 23) % 42, 1, 1, g);
+
+  // flower bed on the left
+  box(g, 4, 192, 40, 5, "#c98f63");
+
+  // chimney (behind the roof)
+  box(g, 236, 18, 14, 28, "#e98aa8");
+  for (let y = 22; y < 44; y += 5) R("#d27493", 237, y, 12, 1, g);
+  box(g, 234, 16, 18, 4, "#f4a6c0");
+
+  // roof
+  for (let y = 16; y <= 56; y++) {
+    const half = Math.round((y - 16) * (136 / 40));
+    const x0 = 172 - half, x1 = 172 + half;
+    R(INK, x0 - 1, y, x1 - x0 + 3, 1, g);
+    R((y % 6 < 3) ? "#f6a5c0" : "#ef94b3", x0 + 1, y, x1 - x0 - 1, 1, g);
+  }
+  R(INK, 34, 56, 278, 2, g);
+  // round attic window with a heart
+  for (let y = -7; y <= 7; y++) for (let x = -7; x <= 7; x++) {
+    const d = x * x + y * y;
+    if (d <= 30) R("#fff6c9", 172 + x, 38 + y, 1, 1, g); else if (d <= 49) R(INK, 172 + x, 38 + y, 1, 1, g);
+  }
+  pixels(g, HEART, 170, 37, { x: "#f48fb4" });
+
+  // walls and wallpaper
+  gingham(g, 48, 58, 160, 66, "#ffe9f1", "#ffd6e5", 4);         // bedroom
+  stripes(g, 208, 58, 88, 66, "#fff7d1", "#ffeaa0", 7);          // reading + art corner
+  gingham(g, 48, 130, 112, 66, "#fff8dc", "#ffefb0", 4);         // kitchen
+  plaidLines(g, 160, 130, 136, 66, "#fff0f5", "#ffc9da");        // living room, her pj plaid
+  R(INK, 208, 58, 1, 30, g); R("#e9c9a8", 206, 88, 4, 3, g);     // little divider beam
+  R(INK, 160, 130, 1, 26, g); R("#e9c9a8", 158, 156, 4, 3, g);
+  // fairy lights along the bedroom ceiling (glow is drawn at night)
+  for (let x = 52; x < 206; x++) R(INK, x, 60 + Math.round(Math.sin((x - 52) / 12) * 2 + 2), 1, 1, g);
+  // outer walls, with open doors on the ground floor
+  box(g, 44, 56, 5, 104, "#fff3df"); box(g, 295, 56, 5, 104, "#fff3df");
+  R(INK, 44, 159, 5, 2, g); R(INK, 295, 159, 5, 2, g);
+  box(g, 30, 160, 14, 36, "#f6a5c0"); R("#ffd966", 32, 178, 2, 2, g); // open front doors
+  box(g, 300, 160, 14, 36, "#f6a5c0"); R("#ffd966", 310, 178, 2, 2, g);
+  // upstairs floor, with a hole for the ladder
+  box(g, 44, 124, HOLE[0] - 44 + 1, 7, "#d9a77a"); box(g, HOLE[1] - 1, 124, 300 - HOLE[1] + 1, 7, "#d9a77a");
+  for (let x = 52; x < 296; x += 16) if (x < HOLE[0] - 2 || x > HOLE[1] + 2) R("#c08a5e", x, 126, 1, 4, g);
+  // ground floor boards
+  box(g, 44, 195, 256, 5, "#d9a77a");
+  for (let x = 52; x < 296; x += 14) R("#c08a5e", x, 196, 1, 3, g);
+
+  // --- bedroom ---
+  Object.entries(BEDS).forEach(([id, bx], i) => {
+    const head = ["#f6a5c0", "#ffd966", "#ffc4d6"][i];
+    box(g, bx, 96, 5, 28, head);                    // headboard
+    pixels(g, HEART, bx, 99, { x: "#fff" });
+    box(g, bx + 36, 106, 5, 18, head);              // footboard
+    box(g, bx + 4, 112, 33, 7, "#fffaf2");          // mattress
+    box(g, bx + 4, 118, 33, 3, "#d9a77a");          // base
+    R(INK, bx + 6, 121, 2, 3, g); R(INK, bx + 33, 121, 2, 3, g);
+    box(g, bx + 5, 107, 10, 6, "#ffffff");          // pillow
+    gingham(g, bx + 25, 109, 11, 4, "#fffbe8", "#ffc4d6", 3); R(INK, bx + 25, 108, 11, 1, g); // folded blanket
+  });
+  // bookshelf
+  box(g, 214, 82, 24, 42, "#d9a77a");
+  [[96, 0], [108, 1], [120, 2]].forEach(([y, s]) => {
+    R(INK, 215, y, 22, 1, g);
+    const cols = ["#f48fb4", "#ffd966", "#9db8ff", "#86b35a", "#ffb7d0", "#e2405a", "#fff1a8"];
+    for (let x = 216, i = 0; x < 235; i++) { const w = 2 + ((i + s) % 2); R(cols[(i * 3 + s) % cols.length], x, y - 10 + ((i + s) % 3), w, 10 - ((i + s) % 3), g); x += w + 1; }
+  });
+  // easel legs (the painting itself is drawn live)
+  R(INK, 249, 104, 2, 20, g); R(INK, 263, 104, 2, 20, g); R(INK, 256, 100, 2, 24, g);
+  R(INK, 248, 116, 18, 1, g);
+  // little rug
+  stripes(g, 64, 122, 100, 2, "#ffd6e5", "#fff1a8", 4);
+
+  // --- kitchen ---
+  box(g, 72, 140, 26, 12, "#ffd6e5"); R(INK, 85, 141, 1, 10, g); R(INK, 80, 145, 2, 1, g); R(INK, 88, 145, 2, 1, g);
+  box(g, 74, 176, 24, 20, "#f7c9d6"); R("#fffaf2", 75, 177, 22, 2, g);
+  R(INK, 77, 175, 6, 1, g); R(INK, 87, 175, 6, 1, g);   // stove rings
+  R(INK, 79, 184, 2, 1, g); R(INK, 91, 184, 2, 1, g);
+  // chairs (the table goes in front of the girls, drawn live)
+  box(g, 88, 164, 3, 32, "#d9a77a"); box(g, 88, 184, 12, 3, "#d9a77a"); R(INK, 97, 187, 2, 9, g);
+  box(g, 150, 164, 3, 32, "#d9a77a"); box(g, 141, 184, 12, 3, "#d9a77a"); R(INK, 142, 187, 2, 9, g);
+
+  // --- living room ---
+  stripes(g, 168, 194, 64, 2, "#ffd6e5", "#fff1a8", 4);
+  box(g, 170, 164, 60, 20, "#f6a5c0");                 // sofa back
+  for (let x = 176; x < 228; x += 18) R("#ef94b3", x, 168, 1, 14, g);
+  box(g, 234, 184, 26, 12, "#d9a77a"); R(INK, 246, 186, 1, 8, g); // tv stand
+  box(g, 236, 166, 22, 19, "#fff1a8");                 // tv body
+  R(INK, 240, 158, 1, 8, g); R(INK, 252, 158, 1, 8, g); R(INK, 239, 157, 2, 1, g); R(INK, 252, 157, 2, 1, g);
+  // plant by the door
+  box(g, 284, 186, 9, 10, "#f6a5c0");
+  [[286, 176], [289, 172], [291, 178], [284, 180]].forEach(([x, y]) => box(g, x, y, 4, 9, "#86b35a"));
+  // ladder
+  for (let y = 124; y < 196; y++) { R("#b07a50", 270, y, 2, 1, g); R("#b07a50", 281, y, 2, 1, g); }
+  for (let y = 128; y < 196; y += 8) R("#c98f63", 272, y, 9, 2, g);
+})();
+
+// window panes (drawn live so they show the real sky)
+const WINDOWS = [[178, 68, 24, 22], [104, 138, 26, 20], [182, 136, 26, 18]];
+
+// ---------- the girls ----------
+const SAVE_KEY = "house";
+let sleepLog = {};
+try { sleepLog = JSON.parse(store.get("sleep") || "{}") || {}; } catch {}
+const saveSleep = () => store.set("sleep", JSON.stringify(sleepLog));
+
+const overlay = $("#overlay");
+KIDS.forEach((k, i) => {
+  k.frames = [sprite(k, 0), sprite(k, 1)];
+  k.sleepFrame = sprite(k, 0, true);
+  Object.assign(k, {
+    x: [120, 200, 330][i], f: 0, y: FLOOR[0], dir: 1, frame: 0, frameT: 0,
+    needs: { hunger: 80, energy: 85, fun: 70, love: 80 },
+    steps: [], step: null, act: "idle", label: "looking around", pose: "stand", item: null,
+    asleep: false, held: false, falling: false, vy: 0, hop: 0, last: null, sayT: 0,
+  });
+  k.bubble = document.createElement("div"); k.bubble.className = "bubble"; overlay.appendChild(k.bubble);
+  k.tag = document.createElement("div"); k.tag.className = "tag"; k.tag.textContent = k.name; overlay.appendChild(k.tag);
+});
+const byId = Object.fromEntries(KIDS.map((k) => [k.id, k]));
+let selected = null;
+
+function say(k, msg, ms = 2000) {
+  k.bubble.textContent = msg;
+  k.bubble.classList.add("show");
+  clearTimeout(k.bubbleTimer);
+  k.bubbleTimer = setTimeout(() => k.bubble.classList.remove("show"), ms);
+}
+function particle(type, x, y, color, n = 1, spread = 6) {
+  for (let i = 0; i < n; i++) world.parts.push({ type, x: x + rand(-spread, spread), y: y + rand(-spread / 2, spread / 2), vx: rand(-8, 8), vy: rand(-22, -10), life: rand(1, 1.8), color });
+}
+const hearts = (k, n = 5) => particle("heart", k.x, k.y - 30, pick(["#f48fb4", "#ff7fa8", "#ffb7d0"]), n, 8);
+
+// ---------- what they can do ----------
+// each activity is a list of steps: { go: {x, f} } walks there (using the ladder),
+// { stay: seconds, ... } does something for a while.
+const others = (k) => KIDS.filter((o) => o !== k);
+const freeSeat = (seats, k, key) => seats.find((s) => !KIDS.some((o) => o !== k && o.seat === key + (s.x ?? s))) ?? seats[0];
+
+const ACTS = {
+  eat: {
+    weight: (k) => ((100 - k.needs.hunger) / 100) ** 2 * 7 + (world.snack ? 4 : 0),
+    plan(k) {
+      const seat = freeSeat(SEATS_TABLE, k, "t");
+      return [
+        { go: { x: 80, f: 0 }, label: "going to the fridge" },
+        { stay: 1.4, label: "opening the fridge", face: -1, start() { world.fridgeT = 1.6; } },
+        { go: { x: seat.x, f: 0 }, label: "having a snack" },
+        { stay: rand(8, 12), label: "having a snack 🍪", pose: "sit", seat: "t" + seat.x, behind: seat.behind, face: seat.dir, item: pick(["cookie", "strawberry", "milk"]),
+          start() { world.snack = false; if (Math.random() < 0.5) say(k, pick(["yum!", "nom nom", "ngon quá!", "mama made this?"])); },
+          tick(dt) { k.needs.hunger = Math.min(100, k.needs.hunger + 9 * dt); if (Math.random() < dt * 1.5) particle("crumb", k.x + k.dir * 6, k.y - 16, "#e9c9a8"); } },
+      ];
+    },
+  },
+  sleep: {
+    weight: (k) => (isNight() ? 400 : 0) + (k.needs.energy < 25 ? 30 : 0),
+    plan(k) { return [{ go: { x: BEDS[k.id] + 20, f: 1 }, label: "going to bed" }, sleepStep(k)]; },
+  },
+  tv: {
+    weight: (k) => ((100 - k.needs.fun) / 100) * 2.2 + (world.tv ? 1.5 : 0) + (KIDS.some((o) => o.act === "tv") ? 1 : 0),
+    plan(k) {
+      const x = freeSeat(SEATS_SOFA, k, "s");
+      return [{ go: { x, f: 0 }, label: "going to watch tv" },
+        { stay: rand(12, 22), label: "watching cartoons 📺", pose: "sit", seat: "s" + x, face: 1,
+          start() { if (!world.tv) { world.tv = true; } },
+          tick(dt) { k.needs.fun = Math.min(100, k.needs.fun + 3 * dt); if (Math.random() < dt * 0.15) say(k, pick(["hehe", "again!", "i love this one", "😂"])); },
+          end() { if (!KIDS.some((o) => o !== k && o.act === "tv")) world.tv = false; } }];
+    },
+  },
+  read: {
+    weight: () => 1.1,
+    plan(k) { return [{ go: { x: rand(218, 232), f: 1 }, label: "picking a book" }, { stay: rand(10, 16), label: "reading a book 📖", item: "book", tick(dt) { k.needs.fun = Math.min(100, k.needs.fun + 2 * dt); } }]; },
+  },
+  paint: {
+    weight: () => 1.2,
+    plan(k) {
+      return [{ go: { x: 240, f: 1 }, label: "going to paint" },
+        { stay: rand(10, 18), label: "painting a picture 🎨", face: 1, item: "brush",
+          start() { if (world.easel.every(Boolean)) { world.easel = blankEasel(); say(k, "new painting!"); } },
+          tick(dt) {
+            k.needs.fun = Math.min(100, k.needs.fun + 2.5 * dt);
+            k.paintT = (k.paintT || 0) + dt;
+            if (k.paintT > 0.35) {
+              k.paintT = 0;
+              const b = world.brush;
+              b.x = clamp(b.x + Math.round(rand(-1.4, 1.4)), 0, EASEL_W - 1);
+              b.y = clamp(b.y + Math.round(rand(-1.4, 1.4)), 0, EASEL_H - 1);
+              world.easel[b.y * EASEL_W + b.x] = pick(PAINT[k.id]);
+            }
+          } }];
+    },
+  },
+  flowers: {
+    weight: () => (isNight() ? 0 : 0.6 + world.flowers.filter((f) => f < 2).length * 0.8),
+    plan(k) {
+      return [{ go: { x: rand(26, 40), f: 0 }, label: "going to the garden" },
+        { stay: rand(6, 9), label: "watering the flowers 🌷", face: -1, item: "can",
+          tick(dt) {
+            world.flowers = world.flowers.map((f) => Math.min(3, f + 0.12 * dt));
+            if (Math.random() < dt * 6) particle("drop", k.x - 12, k.y - 12, "#9db8ff", 1, 3);
+          } }];
+    },
+  },
+  swing: {
+    weight: (k) => (isNight() ? 0 : 1.4) * (KIDS.some((o) => o !== k && o.act === "swing") ? 0 : 1),
+    plan(k) {
+      return [{ go: { x: SWING.px, f: 0 }, label: "going to the swing" },
+        { stay: rand(10, 18), label: "on the swing 🌸", pose: "swing",
+          start() { if (Math.random() < 0.6) say(k, pick(["wheee!", "higher!", "push me papa!"])); },
+          tick(dt) { k.needs.fun = Math.min(100, k.needs.fun + 4 * dt); world.swingDrive = true; } }];
+    },
+  },
+  ball: {
+    weight: (k) => (isNight() ? 0.2 : 1.2) + (Math.abs(world.ball.vx) > 30 ? 1.5 : 0),
+    plan(k) {
+      return [{ go: { x: world.ball.x, f: 0 }, label: "playing ball" },
+        { stay: rand(10, 16), label: "playing ball ⚽", pose: "free",
+          tick(dt) {
+            k.needs.fun = Math.min(100, k.needs.fun + 4 * dt);
+            const dx = world.ball.x - k.x;
+            if (Math.abs(dx) > 7) { walkToward(k, world.ball.x, dt, 1.5); }
+            else if (Math.abs(world.ball.vx) < 30) {
+              kickBall(Math.random() < 0.5 ? -1 : 1, rand(70, 140));
+              if (Math.random() < 0.3) say(k, pick(["kick!", "goal!!", "your turn!"]), 1200);
+            }
+          } }];
+    },
+  },
+  dance: {
+    weight: () => 0.7,
+    plan(k) {
+      return [{ stay: rand(5, 9), label: "dancing 💃", pose: "dance",
+        tick(dt) { k.needs.fun = Math.min(100, k.needs.fun + 3 * dt); if (Math.random() < dt * 2) particle("note", k.x + rand(-10, 10), k.y - 30, pick(["#f48fb4", "#ffd966", "#9db8ff"])); } }];
+    },
+  },
+  window: {
+    weight: () => 0.5,
+    plan(k) { return [{ go: { x: 190, f: 1 }, label: "going to the window" }, { stay: rand(5, 8), label: "looking outside", start() { say(k, isNight() ? pick(["the moon!", "so many stars", "goodnight sky"]) : pick(["pretty sky", "i see a bird!", "the tree is so pink", "is papa coming home?"])); } }]; },
+  },
+  chat: {
+    weight: (k) => (partnerFor(k) ? ((100 - k.needs.love) / 100) * 2 + 1 : 0),
+    plan(k) {
+      const p = partnerFor(k);
+      if (!p) return ACTS.idle.plan(k);
+      const side = p.x > k.x ? -1 : 1;
+      endStep(p);
+      p.steps = [];
+      p.act = "chat";
+      startStep(p, { stay: 14, label: `chatting with ${k.name}`, faceTo: k });
+      return [
+        { go: { x: clamp(p.x + side * 18, RANGE[p.f][0], RANGE[p.f][1]), f: p.f }, label: `going to ${p.name}` },
+        { stay: rand(7, 10), label: `chatting with ${p.name} 💬`, faceTo: p,
+          tick(dt) {
+            k.chatT = (k.chatT || 0) + dt;
+            if (k.chatT > 1.8) { k.chatT = 0; say(Math.random() < 0.5 ? k : p, pick(CHAT), 1600); }
+          },
+          end() {
+            hearts(k, 4); hearts(p, 3);
+            k.needs.love = Math.min(100, k.needs.love + 20); p.needs.love = Math.min(100, p.needs.love + 20);
+            if (p.step && p.act === "chat") p.step.dur = 0;
+          } }];
+    },
+  },
+  wander: {
+    weight: () => 1,
+    plan(k) { const f = Math.random() < 0.5 ? 0 : 1; return [{ go: { x: rand(...RANGE[f]), f }, label: "wandering around" }, { stay: rand(2, 4), label: "looking around" }]; },
+  },
+  idle: {
+    weight: () => 0.8,
+    plan(k) { return [{ stay: rand(3, 6), label: "daydreaming ☁️", start() { if (Math.random() < 0.4) say(k, pick([...k.says, ...KID_SAYS])); } }]; },
+  },
+};
+const CHAT = ["hehe", "💕", "best sisters ♡", "wanna play?", "i love u", "🎀", "secret: mama is the best", "papa is so silly", "shhh hehe", "pinky promise"];
+const INTERRUPTIBLE = ["idle", "wander", "dance", "window", "read", "tv", "paint"];
+function partnerFor(k) {
+  const opts = others(k).filter((o) => !o.asleep && !o.held && !o.falling && !o.climbing && INTERRUPTIBLE.includes(o.act));
+  return opts.length ? pick(opts) : null;
+}
+function sleepStep(k) {
+  return {
+    stay: Infinity, label: "sleeping 💤", pose: "sleep",
+    start() { k.asleep = true; sleepLog[k.id] = Date.now(); saveSleep(); },
+    tick(dt) {
+      k.needs.energy = Math.min(100, k.needs.energy + 0.25 * dt);
+      if (Math.random() < dt * 0.4) particle("z", k.x - 8, k.y - 26, "#9db8ff", 1, 2);
+      if (!isNight() && k.needs.energy >= 99 && Math.random() < dt * 0.05) k.step.dur = 0;
+    },
+    end() { wake(k); },
+  };
+}
+function wake(k, greet = true) {
+  if (!k.asleep) return;
+  k.asleep = false;
+  delete sleepLog[k.id];
+  saveSleep();
+  k.pose = "stand";
+  k.f = 1; k.y = FLOOR[1]; k.x = BEDS[k.id] + 20;
+  if (greet) say(k, pick(MORNING));
+}
+
+// ---------- choosing and running steps ----------
+function chooseActivity(k) {
+  const entries = Object.entries(ACTS).map(([id, a]) => [id, Math.max(0, a.weight(k)) * (id === k.last ? 0.25 : 1)]);
+  const total = entries.reduce((s, [, w]) => s + w, 0);
+  let r = Math.random() * total;
+  let id = "idle";
+  for (const [i, w] of entries) { if ((r -= w) <= 0) { id = i; break; } }
+  doActivity(k, id);
+}
+const THINK = { eat: "🍪", sleep: "💤", tv: "📺", read: "📖", paint: "🎨", flowers: "🌷", swing: "🌸", ball: "⚽", dance: "🎵", chat: "💬" };
+function doActivity(k, id) {
+  k.act = id; k.last = id;
+  k.steps = ACTS[id].plan(k);
+  k.step = null;
+  k.seat = null;
+  if (THINK[id] && Math.random() < 0.35 && !k.bubble.classList.contains("show")) say(k, THINK[id], 1200);
+}
+function startStep(k, s) {
+  k.step = s;
+  s.t = 0;
+  if ("stay" in s) {
+    s.dur = s.stay;
+    k.pose = s.pose || "stand";
+    k.item = s.item || null;
+    k.seat = s.seat || null;
+    if (s.face) k.dir = s.face;
+    s.start?.call(s);
+  }
+  k.label = s.label || k.label;
+}
+function endStep(k) {
+  const s = k.step;
+  k.step = null;
+  if (s && "stay" in s) { s.end?.call(s); k.item = null; k.seat = null; if (k.pose !== "sleep") k.pose = "stand"; }
+}
+
+function walkToward(k, tx, dt, speedMul = 1) {
+  const dx = tx - k.x;
+  k.dir = dx > 0 ? 1 : -1;
+  k.x += k.dir * Math.min(Math.abs(dx), 28 * speedMul * dt);
+  k.frameT += dt;
+  if (k.frameT > 0.2 / speedMul) { k.frameT = 0; k.frame ^= 1; }
+  return Math.abs(tx - k.x) < 0.5;
+}
+
+function updateKid(k, dt) {
+  const n = k.needs;
+  if (!k.asleep) { n.energy -= 0.012 * dt; n.hunger -= 0.02 * dt; n.fun -= 0.025 * dt; }
+  else { n.hunger -= 0.006 * dt; }
+  n.love -= 0.008 * dt;
+  for (const key in n) n[key] = clamp(n[key], 3, 100);
+  k.hop = Math.max(0, k.hop - dt * 4);
+
+  if (k.held) { k.frameT += dt; if (k.frameT > 0.09) { k.frameT = 0; k.frame ^= 1; } return; }
+  if (k.falling) {
+    k.vy += 600 * dt;
+    k.y += k.vy * dt;
+    if (k.y >= FLOOR[k.f]) {
+      k.y = FLOOR[k.f]; k.falling = false; k.frame = 0;
+      say(k, pick(["oof!", "again again!", "hehe", "ta-da!"]), 1400);
+      k.steps = []; startStep(k, { stay: 1.2, label: "landed!" });
+    }
+    return;
+  }
+
+  if (!k.step) {
+    if (!k.steps.length) chooseActivity(k);
+    startStep(k, k.steps.shift());
+  }
+  const s = k.step;
+
+  if ("go" in s) {
+    const t = s.go;
+    k.pose = "stand";
+    if (k.climbing) {
+      const ty = FLOOR[k.climbing.to];
+      k.y += Math.sign(ty - k.y) * 22 * dt;
+      k.frameT += dt;
+      if (k.frameT > 0.18) { k.frameT = 0; k.frame ^= 1; }
+      if (Math.abs(ty - k.y) < 1) { k.y = ty; k.f = k.climbing.to; k.climbing = null; }
+      return;
+    }
+    if (k.f !== t.f) {
+      if (walkToward(k, LADDER, dt)) k.climbing = { to: t.f };
+      return;
+    }
+    if (walkToward(k, clamp(t.x, ...RANGE[k.f]), dt)) { k.frame = 0; endStep(k); }
+    return;
+  }
+
+  // staying somewhere and doing something
+  s.t += dt;
+  if (s.faceTo) k.dir = s.faceTo.x > k.x ? 1 : -1;
+  s.tick?.call(s, dt);
+  if (k.pose !== "free" && k.pose !== "dance") k.frame = 0;
+  if (k.pose === "dance") { k.frameT += dt; if (k.frameT > 0.3) { k.frameT = 0; k.frame ^= 1; k.hop = 1; if (Math.random() < 0.3) k.dir *= -1; } }
+  if (s.t >= s.dur) endStep(k);
+}
+
+// ---------- the ball, swing and everything else ----------
+function kickBall(dir, power) { world.ball.vx = dir * power; world.ball.vh = rand(40, 80); }
+function updateWorld(dt) {
+  world.t += dt;
+  const b = world.ball;
+  b.x += b.vx * dt;
+  b.vx *= Math.exp(-0.9 * dt);
+  if (Math.abs(b.vx) < 2) b.vx = 0;
+  if (b.x < 8) { b.x = 8; b.vx = Math.abs(b.vx) * 0.7; }
+  if (b.x > 376) { b.x = 376; b.vx = -Math.abs(b.vx) * 0.7; }
+  b.vh -= 260 * dt; b.h += b.vh * dt;
+  if (b.h < 0) { b.h = 0; b.vh = Math.abs(b.vh) > 30 ? -b.vh * 0.45 : 0; }
+
+  const sw = world.swing;
+  const drive = world.swingDrive;
+  world.swingDrive = false;
+  sw.v += -6.7 * Math.sin(sw.a) * dt;
+  if (drive) sw.v += Math.sign(sw.v || 1) * 0.9 * dt;   // she pumps her legs
+  sw.v *= Math.exp(-(drive ? 0.12 : 0.7) * dt);
+  sw.a = clamp(sw.a + sw.v * dt, -0.75, 0.75);
+
+  world.fridgeT = Math.max(0, world.fridgeT - dt);
+  world.flowers = world.flowers.map((f) => Math.max(0, f - dt / 21600)); // dry out over ~6h
+  world.clouds.forEach((c) => { c.x += dt * 2 * c.s; if (c.x > W + 30) c.x = -40; });
+  world.parts = world.parts.filter((p) => {
+    p.life -= dt;
+    p.x += p.vx * dt;
+    p.y += p.vy * dt;
+    if (p.type === "drop" || p.type === "crumb") { p.vy += 120 * dt; if (p.y > FLOOR[0]) return false; }
+    return p.life > 0;
+  });
+}
+
+// ---------- drawing ----------
+function drawSky(sky) {
+  const grad = ctx.createLinearGradient(0, 0, 0, 196);
+  grad.addColorStop(0, sky.top); grad.addColorStop(1, sky.bottom);
+  ctx.fillStyle = grad; ctx.fillRect(0, 0, W, 196);
+  if (sky.dark > 0.2) {
+    ctx.globalAlpha = Math.min(1, (sky.dark - 0.2) * 4);
+    for (let i = 0; i < 46; i++) {
+      const x = (i * 97) % W, y = (i * 41) % 120;
+      const tw = Math.sin(world.t * 2 + i) > 0.6 ? 2 : 1;
+      R(i % 5 ? "#fff" : "#fff1a8", x, y, 1, 1);
+      if (tw === 2) { R("rgba(255,255,255,.6)", x - 1, y, 3, 1); R("rgba(255,255,255,.6)", x, y - 1, 1, 3); }
+    }
+    ctx.globalAlpha = 1;
+  }
+  // sun by day, moon by night, moving across the sky with the real clock
+  const h = hourNow();
+  const day = h >= 6 && h < 20;
+  const p = day ? (h - 6) / 14 : ((h + 24 - 20) % 24) / 10;
+  const cx = 20 + p * (W - 40), cy = 70 - Math.sin(p * Math.PI) * 52;
+  for (let y = -9; y <= 9; y++) for (let x = -9; x <= 9; x++) {
+    const d = x * x + y * y;
+    if (day) {
+      if (d <= 36) R("#fff1a8", cx + x, cy + y, 1, 1);
+      else if (d <= 49) R("#ffd966", cx + x, cy + y, 1, 1);
+      else if (d <= 81 && (x === 0 || y === 0 || Math.abs(x) === Math.abs(y)) && Math.sin(world.t * 3) > -0.3) R("#ffe680", cx + x, cy + y, 1, 1);
+    } else if (d <= 36 && (x + 3) * (x + 3) + (y - 2) * (y - 2) > 22) R("#fff8dc", cx + x, cy + y, 1, 1);
+  }
+  ctx.globalAlpha = 1 - sky.dark;
+  world.clouds.forEach((c) => {
+    const x = Math.round(c.x), y = c.y;
+    R("#fff", x, y, 22, 5); R("#fff", x + 4, y - 3, 10, 3); R("#fff", x + 12, y - 5, 7, 5); R("#ffeef4", x, y + 4, 22, 1);
+  });
+  ctx.globalAlpha = 1;
+}
+
+function drawWindows(sky) {
+  WINDOWS.forEach(([x, y, w, h]) => {
+    box(ctx, x - 1, y - 1, w + 2, h + 2, "#fffaf2");
+    const grad = ctx.createLinearGradient(0, y, 0, y + h);
+    grad.addColorStop(0, sky.top); grad.addColorStop(1, sky.bottom);
+    ctx.fillStyle = grad; ctx.fillRect(x + 1, y + 1, w - 2, h - 2);
+    if (sky.dark > 0.25) R("#fff", x + 4, y + 4, 1, 1);
+    R(INK, x + Math.floor(w / 2), y, 1, h); R(INK, x, y + Math.floor(h / 2), w, 1);
+    R("rgba(255,255,255,.35)", x + 2, y + 2, 3, 1);
+    // curtains
+    R("#ffb7d0", x - 2, y - 2, 4, h + 4); R("#ffb7d0", x + w - 2, y - 2, 4, h + 4);
+    R("#f48fb4", x - 2, y - 3, w + 4, 2);
+  });
+}
+
+function drawTV() {
+  if (!world.tv) { R("#3b3346", 239, 169, 16, 13); R("#57506b", 240, 170, 3, 1); return; }
+  const t = world.t;
+  const cols = ["#ffb7d0", "#fff1a8", "#9db8ff", "#b9dfa0"];
+  R(cols[Math.floor(t * 1.5) % cols.length], 239, 169, 16, 13);
+  pixels(ctx, HEART, 244 + Math.round(Math.sin(t * 3) * 3), 173, { x: "#f48fb4" });
+  for (let y = 169; y < 182; y += 2) R("rgba(0,0,0,.08)", 239, y, 16, 1);
+}
+
+function drawFridge() {
+  box(ctx, 52, 152, 20, 44, "#fffdf5");
+  R(INK, 53, 168, 18, 1);
+  if (world.fridgeT > 0) {
+    R("#fff6c9", 53, 169, 18, 26);
+    R("#e2405a", 56, 176, 3, 3); R("#fff", 62, 175, 4, 5); R("#ffd966", 56, 186, 6, 3); R("#86b35a", 64, 186, 3, 3);
+    box(ctx, 72, 167, 6, 29, "#fffdf5");
+  } else {
+    R("#d8cfc0", 68, 172, 1, 8);
+    pixels(ctx, HEART, 56, 178, { x: "#f48fb4" });
+  }
+  R("#d8cfc0", 68, 157, 1, 7);
+}
+
+function drawEasel() {
+  box(ctx, 247, 90, 18, 15, "#fffaf2");
+  world.easel.forEach((c, i) => { if (c) R(c, 249 + (i % EASEL_W), 92 + Math.floor(i / EASEL_W), 1, 1); });
+}
+
+function drawFlowers() {
+  [8, 17, 26, 35].forEach((x, i) => {
+    const g = world.flowers[i];
+    const petal = ["#f48fb4", "#ffd966", "#ffb7d0", "#fff1a8"][i];
+    if (g < 0.5) { R("#86b35a", x + 2, 190, 1, 2); return; }
+    const hgt = Math.round(4 + g * 3);
+    R("#86b35a", x + 2, 192 - hgt, 1, hgt);
+    R("#86b35a", x + 3, 188, 2, 1);
+    if (g < 2) { R(petal, x + 1, 191 - hgt, 3, 2); return; }
+    const y = 190 - hgt;
+    R(petal, x + 1, y - 1, 3, 5); R(petal, x, y, 5, 3);
+    R(g >= 2.8 ? "#fff" : "#ffd966", x + 2, y + 1, 1, 1);
+  });
+}
+
+function drawBall() {
+  const b = world.ball;
+  const x = Math.round(b.x), y = Math.round(FLOOR[0] - 4 - b.h);
+  for (let j = -4; j <= 4; j++) for (let i = -4; i <= 4; i++) {
+    const d = i * i + j * j;
+    if (d <= 12) R((Math.floor((i + 4 + b.x / 3) / 3) % 2) ? "#f48fb4" : "#fff1a8", x + i, y + j, 1, 1);
+    else if (d <= 20) R(INK, x + i, y + j, 1, 1);
+  }
+  R("#fff", x - 2, y - 2, 1, 1);
+}
+
+function swingSeat() {
+  const a = world.swing.a;
+  return { x: SWING.px + Math.sin(a) * SWING.len, y: SWING.py + Math.cos(a) * SWING.len };
+}
+function drawSwingRopes() {
+  const s = swingSeat();
+  ctx.strokeStyle = "#8a6a55"; ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(SWING.px - 5.5, SWING.py + 1); ctx.lineTo(s.x - 5.5, s.y);
+  ctx.moveTo(SWING.px + 5.5, SWING.py + 1); ctx.lineTo(s.x + 5.5, s.y);
+  ctx.stroke();
+}
+function drawSwingSeat() { const s = swingSeat(); box(ctx, Math.round(s.x) - 8, Math.round(s.y) - 1, 17, 4, "#f6a5c0"); }
+
+const ITEMS = {
+  cookie:     [".xx.", "xyxx", "xxyx", ".xx."],
+  strawberry: [".g.", "rrr", "rwr", ".r."],
+  milk:       ["ww", "ww", "pw"],
+  book:       ["pppp", "pwwp", "pwwp", "pppp"],
+  brush:      ["...r", "..b.", ".b..", "b..."],
+  can:        ["..bbb.", "bbbbbb", ".bbbb.", ".bbbb."],
+};
+const ITEM_COLORS = { x: "#d9a77a", y: "#6b3a2a", g: "#86b35a", r: "#e2405a", w: "#fffaf2", p: "#f48fb4", b: "#9db8ff" };
+
+function kidPos(k) {
+  if (k.pose === "swing" && k.step && "stay" in k.step) { const s = swingSeat(); return { x: s.x, y: s.y + 6 }; }
+  let y = k.y;
+  if (k.pose === "sit") y += 6;
+  if (k.pose === "dance" || k.hop) y -= Math.round(k.hop * 4);
+  return { x: k.x, y };
+}
+
+function drawKid(k) {
+  if (k.pose === "sleep") {
+    const bx = BEDS[k.id];
+    ctx.save();
+    ctx.translate(bx + 20, 110);
+    ctx.rotate(-Math.PI / 2);
+    if (k.rolled) ctx.scale(-1, 1);
+    ctx.drawImage(k.sleepFrame, -16, -17);
+    ctx.restore();
+    gingham(ctx, bx + 14, 104, 22, 15, "#fffbe8", "#ffc4d6", 3);
+    R(INK, bx + 14, 103, 22, 1); R(INK, bx + 13, 103, 1, 16);
+    return;
+  }
+  const { x, y } = kidPos(k);
+  ctx.save();
+  ctx.translate(Math.round(x), Math.round(y));
+  if (k.climbing) ctx.rotate(k.frame ? 0.1 : -0.1);
+  if (k.held) ctx.rotate(Math.sin(world.t * 12) * 0.15);
+  if (k.dir < 0) ctx.scale(-1, 1);
+  ctx.drawImage(k.frames[k.frame], -16, -33);
+  if (k.item && ITEMS[k.item]) pixels(ctx, ITEMS[k.item], k.item === "book" ? -2 : 7, k.item === "can" ? -15 : -17, ITEM_COLORS);
+  ctx.restore();
+}
+
+function drawForeground() {
+  // the table and sofa sit in front of the girls when they sit down
+  box(ctx, 100, 178, 40, 4, "#d9a77a"); R(INK, 103, 182, 2, 14); R(INK, 135, 182, 2, 14);
+  R("#fffaf2", 108, 176, 6, 2); R("#ffd966", 124, 175, 4, 3);
+  if (world.snack) { pixels(ctx, ITEMS.cookie, 116, 174, ITEM_COLORS); }
+  box(ctx, 168, 182, 64, 9, "#f6a5c0");
+  box(ctx, 166, 174, 7, 20, "#ef94b3"); box(ctx, 227, 174, 7, 20, "#ef94b3");
+  R(INK, 170, 191, 2, 5); R(INK, 228, 191, 2, 5);
+  drawSwingSeat();
+}
+
+function drawNight(sky) {
+  if (sky.dark <= 0.01) return;
+  // dark outside, but the house keeps its lights on
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(0, 0, W, H);
+  ctx.rect(48, 58, 248, 138);
+  ctx.fillStyle = `rgba(30,18,60,${sky.dark})`;
+  ctx.fill("evenodd");
+  ctx.fillStyle = `rgba(60,30,40,${sky.dark * 0.18})`;
+  ctx.fillRect(48, 58, 248, 138);
+  ctx.restore();
+  // fairy lights glow
+  const on = Math.min(1, sky.dark * 3);
+  for (let x = 54; x < 206; x += 8) {
+    const y = 60 + Math.round(Math.sin((x - 52) / 12) * 2 + 2) + 1;
+    const c = ["#ffd966", "#ff9fbf", "#fff1a8", "#9db8ff"][(x / 8) % 4 | 0];
+    ctx.globalAlpha = on * (0.7 + 0.3 * Math.sin(world.t * 2 + x));
+    R(c, x, y, 2, 2); R("rgba(255,240,180,.25)", x - 1, y - 1, 4, 4);
+  }
+  ctx.globalAlpha = 1;
+}
+
+function drawParticles() {
+  world.parts.forEach((p) => {
+    ctx.globalAlpha = Math.min(1, p.life * 1.5);
+    const x = Math.round(p.x), y = Math.round(p.y);
+    if (p.type === "heart") pixels(ctx, HEART, x - 2, y - 2, { x: p.color });
+    else if (p.type === "note") pixels(ctx, NOTE, x - 1, y - 2, { x: p.color });
+    else if (p.type === "z") pixels(ctx, ZED, x - 1, y - 2, { x: p.color });
+    else if (p.type === "drop") pixels(ctx, DROP, x - 1, y - 1, { x: p.color });
+    else R(p.color, x, y, 1, 1);
+  });
+  ctx.globalAlpha = 1;
+}
+
+function draw() {
+  const sky = skyNow();
+  drawSky(sky);
+  ctx.drawImage(bg, 0, 0);
+  drawWindows(sky);
+  drawTV();
+  drawFridge();
+  drawEasel();
+  drawFlowers();
+  drawSwingRopes();
+  drawBall();
+  const order = [...KIDS].sort((a, b) => (a === selected) - (b === selected));
+  order.filter((k) => k.step?.behind).forEach(drawKid);
+  order.filter((k) => !k.step?.behind && k.pose === "sit").forEach(drawKid);
+  drawForeground();
+  order.filter((k) => !k.step?.behind && k.pose !== "sit").forEach(drawKid);
+  drawNight(sky);
+  drawParticles();
+  if (selected && !selected.held) {
+    const p = selected.pose === "sleep" ? { x: BEDS[selected.id] + 10, y: 96 } : kidPos(selected);
+    const bob = Math.round(Math.sin(world.t * 5));
+    pixels(ctx, ["xxxxx", ".xxx.", "..x.."], Math.round(p.x) - 2, Math.round(p.y) - 42 + bob, { x: "#ffd966" });
+  }
+}
+
+// ---------- fitting the house to the screen ----------
+let scale = 2;
+const stage = $("#stage"), wrap = $("#wrap");
+function fit() {
+  const availW = wrap.clientWidth;
+  const availH = Math.max(240, innerHeight - (innerWidth > 640 ? 330 : 360));
+  let s = Math.min(availW / W, availH / H);
+  if (s < 1.4) s = Math.min(2.4, Math.max(s, availH / H));
+  scale = s;
+  stage.style.width = W * s + "px";
+  stage.style.height = H * s + "px";
+}
+addEventListener("resize", fit);
+fit();
+wrap.scrollLeft = (W * scale - wrap.clientWidth) / 2;
+
+function placeOverlays() {
+  KIDS.forEach((k) => {
+    const p = k.pose === "sleep" ? { x: BEDS[k.id] + 12, y: 100 } : kidPos(k);
+    k.bubble.style.left = p.x * scale + "px";
+    k.bubble.style.top = (p.y - 34) * scale + "px";
+    k.tag.style.left = p.x * scale + "px";
+    k.tag.style.top = (p.y + 2) * scale + "px";
+    k.tag.classList.toggle("show", k === selected && k.pose !== "sleep");
+  });
+}
+
+// ---------- touching things ----------
+const toScene = (e) => { const r = canvas.getBoundingClientRect(); return { x: (e.clientX - r.left) / (r.width / W), y: (e.clientY - r.top) / (r.height / H) }; };
+function kidAt(p) {
+  for (const k of [...KIDS].reverse()) {
+    if (k.pose === "sleep") { const bx = BEDS[k.id]; if (p.x >= bx && p.x <= bx + 40 && p.y >= 94 && p.y <= 124) return k; continue; }
+    const q = kidPos(k);
+    if (Math.abs(p.x - q.x) < 13 && p.y < q.y + 2 && p.y > q.y - 32) return k;
+  }
+  return null;
+}
+const inRect = (p, x, y, w, h) => p.x >= x && p.x <= x + w && p.y >= y && p.y <= y + h;
+
+function select(k) {
+  selected = k;
+  document.querySelectorAll(".kcard").forEach((c) => c.classList.toggle("sel", c.dataset.id === k?.id));
+}
+
+function interrupt(k, id) {
+  if (k.held || k.falling) return;
+  if (k.asleep && id !== "sleep") { endStep(k); }
+  else endStep(k);
+  k.climbing = null;
+  if (k.y !== FLOOR[k.f]) { k.f = k.y < FLOOR[0] - 20 ? 1 : 0; k.y = FLOOR[k.f]; }
+  doActivity(k, id);
+}
+
+function tapKid(k) {
+  audio();
+  select(k);
+  if (k.asleep) {
+    if (Math.random() < 0.6) { say(k, pick(SLEEP_TALK)); k.rolled = !k.rolled; tone(220, { type: "sine", slide: 160, dur: 0.35, vol: 0.06 }); }
+    else { endStep(k); k.steps = []; sfx.boing(); }
+    return;
+  }
+  sfx.squeak();
+  k.hop = 1;
+  k.needs.love = Math.min(100, k.needs.love + 8);
+  hearts(k, 4);
+  say(k, pick([...k.says, ...KID_SAYS]));
+}
+
+function tapWorld(p) {
+  audio();
+  if (inRect(p, 50, 150, 24, 46)) {                         // fridge: put out a snack
+    world.fridgeT = 1.5; world.snack = true; sfx.fridge();
+    const hungry = KIDS.filter((k) => !k.asleep && !k.held).sort((a, b) => a.needs.hunger - b.needs.hunger)[0];
+    if (hungry) { interrupt(hungry, "eat"); say(hungry, "snack!!", 1200); }
+    return true;
+  }
+  if (inRect(p, 234, 156, 26, 40)) {                        // tv
+    world.tv = !world.tv; sfx.tv();
+    if (world.tv) { const k = pick(KIDS.filter((k) => !k.asleep && !k.held && k.act !== "tv")); if (k) { interrupt(k, "tv"); say(k, "cartoons!", 1200); } }
+    return true;
+  }
+  const b = world.ball;
+  if (Math.abs(p.x - b.x) < 9 && p.y > FLOOR[0] - 14 - b.h && p.y < FLOOR[0] + 2) {   // ball
+    kickBall(p.x < b.x ? 1 : -1, rand(120, 180)); sfx.kick();
+    return true;
+  }
+  if (inRect(p, 2, 170, 44, 28)) {                          // flowers
+    world.flowers = world.flowers.map((f) => Math.min(3, f + 0.8)); sfx.water();
+    particle("drop", 24, 176, "#9db8ff", 8, 14);
+    return true;
+  }
+  const s = swingSeat();
+  if (inRect(p, s.x - 14, SWING.py, 28, s.y - SWING.py + 6)) { // swing: give it a push
+    world.swing.v += (world.swing.v >= 0 ? 1 : -1) * 0.9; sfx.boing();
+    return true;
+  }
+  for (const k of KIDS) {                                   // her own bed: bedtime
+    const bx = BEDS[k.id];
+    if (!k.asleep && inRect(p, bx, 94, 42, 30)) { interrupt(k, "sleep"); say(k, "okay mama…", 1400); sfx.lullaby(); return true; }
+  }
+  return false;
+}
+
+let drag = null, pan = null;
+canvas.addEventListener("pointerdown", (e) => {
+  const p = toScene(e);
+  const k = kidAt(p);
+  canvas.setPointerCapture(e.pointerId);
+  if (!k) { pan = { p, sx: e.clientX, sl: wrap.scrollLeft, moved: false }; return; } // swipe the house sideways, or tap something
+  drag = { k, sx: p.x, sy: p.y, moved: false };
+});
+canvas.addEventListener("pointermove", (e) => {
+  if (pan) {
+    const dx = e.clientX - pan.sx;
+    if (Math.abs(dx) > 6) pan.moved = true;
+    if (pan.moved) wrap.scrollLeft = pan.sl - dx;
+    return;
+  }
+  if (!drag) return;
+  const p = toScene(e);
+  const k = drag.k;
+  if (!drag.moved && Math.hypot(p.x - drag.sx, p.y - drag.sy) > 4) {
+    drag.moved = true;
+    audio(); sfx.squeak(); select(k);
+    if (k.asleep) { endStep(k); say(k, "mmh? where are we going", 1400); }
+    else { endStep(k); say(k, pick(["wheee!", "put me down papa!", "mama i'm flying", "hehe"]), 1400); }
+    k.steps = []; k.climbing = null; k.held = true; k.pose = "stand"; k.act = "held"; k.label = "being carried by you ♡";
+  }
+  if (drag.moved) { k.x = clamp(p.x, 4, W - 4); k.y = clamp(p.y + 16, 30, FLOOR[0]); }
+});
+function drop(e) {
+  if (pan) { const { p, moved } = pan; pan = null; if (!moved) tapWorld(p) || select(null); return; }
+  if (!drag) return;
+  const { k, moved } = drag;
+  drag = null;
+  if (!moved) return tapKid(k);
+  k.held = false;
+  const p = toScene(e);
+  const bx = BEDS[k.id];
+  if (inRect(p, bx - 4, 88, 48, 38)) {                     // into her bed
+    k.x = bx + 20; k.f = 1; k.y = FLOOR[1];
+    sfx.lullaby(); say(k, pick(GOODNIGHT));
+    doActivity(k, "sleep"); k.steps = [sleepStep(k)];
+    return;
+  }
+  for (const o of KIDS) if (o !== k && inRect(p, BEDS[o.id] - 4, 88, 48, 38)) say(k, "that's not my bed!");
+  // fall onto whatever floor is underneath
+  const upstairs = k.y <= FLOOR[1] + 4 && k.x >= RANGE[1][0] - 6 && k.x <= RANGE[1][1] + 4 && !(k.x > HOLE[0] && k.x < HOLE[1]);
+  k.f = upstairs ? 1 : 0;
+  if (k.f === 1) k.x = clamp(k.x, ...RANGE[1]);
+  k.falling = true; k.vy = 0;
+  k.act = "landing"; k.label = "falling!";
+}
+canvas.addEventListener("pointerup", drop);
+canvas.addEventListener("pointercancel", drop);
+
+// ---------- the cards under the house ----------
+const MOOD = (n) => {
+  if (n.energy < 20) return "🥱";
+  if (n.hunger < 25) return "🥺";
+  const avg = (n.hunger + n.energy + n.fun + n.love) / 4;
+  return avg > 75 ? "🥰" : avg > 50 ? "😊" : avg > 30 ? "🙂" : "😢";
+};
+KIDS.forEach((k) => {
+  const c = document.createElement("div");
+  c.className = "kcard";
+  c.dataset.id = k.id;
+  c.innerHTML = `
+    <div class="khead"><canvas width="${GW}" height="${GH}"></canvas>
+      <div style="min-width:0"><div class="kname"></div><div class="kact"></div></div><span class="kmood"></span></div>
+    <div class="bars">
+      <span>🍪</span><div class="bar h"><i></i></div>
+      <span>⚡</span><div class="bar e"><i></i></div>
+      <span>🎈</span><div class="bar f"><i></i></div>
+      <span>💗</span><div class="bar l"><i></i></div>
+    </div>
+    <div class="kbtns">
+      <button type="button" data-do="eat">🍪 feed</button>
+      <button type="button" data-do="ball">⚽ play</button>
+      <button type="button" data-do="hug">🤗 hug</button>
+      <button type="button" data-do="bed">🌙 bed</button>
+    </div>`;
+  c.querySelector(".kname").textContent = k.name;
+  c.querySelector("canvas").getContext("2d").drawImage(k.frames[0], 0, 0);
+  c.addEventListener("click", (e) => {
+    const b = e.target.closest("button");
+    select(k);
+    if (!b) { const p = kidPos(k); wrap.scrollTo({ left: p.x * scale - wrap.clientWidth / 2, behavior: "smooth" }); return; }
+    audio();
+    const what = b.dataset.do;
+    if (what === "hug") {
+      k.needs.love = Math.min(100, k.needs.love + 25); hearts(k, 8); sfx.squeak(); k.hop = 1;
+      say(k, k.asleep ? "zzz… ♡" : pick(["con yêu mẹ ♡", "con yêu bố ♡", "hug!!", "mama's girl ♡", "squeeze!"]));
+      return;
+    }
+    if (what === "bed") {
+      if (k.asleep) { endStep(k); k.steps = []; sfx.boing(); }
+      else { interrupt(k, "sleep"); sfx.lullaby(); say(k, pick(GOODNIGHT), 1500); }
+      return;
+    }
+    if (k.asleep) { endStep(k); k.steps = []; }
+    interrupt(k, what);
+    sfx.pop();
+    say(k, what === "eat" ? pick(["yay snack!", "thank u mama", "con đói quá"]) : pick(["ball!!", "play with me!", "yay"]), 1400);
+  });
+  k.card = c;
+  $("#cards").appendChild(c);
+});
+function renderCards() {
+  KIDS.forEach((k) => {
+    const c = k.card;
+    c.querySelector(".kact").textContent = k.climbing ? "climbing the ladder" : k.label;
+    c.querySelector(".kmood").textContent = k.asleep ? "😴" : MOOD(k.needs);
+    const [h, e, f, l] = c.querySelectorAll(".bar i");
+    h.style.width = k.needs.hunger + "%"; e.style.width = k.needs.energy + "%";
+    f.style.width = k.needs.fun + "%"; l.style.width = k.needs.love + "%";
+    c.querySelector('[data-do="bed"]').textContent = k.asleep ? "☀️ wake" : "🌙 bed";
+  });
+}
+
+// ---------- remembering everything ----------
+function save() {
+  store.set(SAVE_KEY, JSON.stringify({
+    t: Date.now(),
+    kids: Object.fromEntries(KIDS.map((k) => [k.id, { needs: k.needs, x: k.x, f: k.f, asleep: k.asleep }])),
+    easel: world.easel, flowers: world.flowers, ball: world.ball.x,
+  }));
+}
+// time passes while you're away: they get hungry, sleep, and so on
+function catchUp(seconds) {
+  const s = Math.min(seconds, 24 * 3600);
+  KIDS.forEach((k) => {
+    const n = k.needs;
+    if (k.asleep) { n.energy = Math.min(100, n.energy + 0.25 * s); n.hunger -= 0.006 * s; }
+    else { n.energy -= 0.012 * s; n.hunger -= 0.02 * s; n.fun -= 0.025 * s; }
+    n.love -= 0.008 * s;
+    for (const key in n) n[key] = clamp(n[key], 15, 100); // they look after each other while you're gone
+  });
+  world.flowers = world.flowers.map((f) => Math.max(0, f - s / 21600));
+}
+function load() {
+  let saved = null;
+  try { saved = JSON.parse(store.get(SAVE_KEY) || "null"); } catch {}
+  if (saved) {
+    KIDS.forEach((k) => {
+      const d = saved.kids?.[k.id];
+      if (!d) return;
+      Object.assign(k.needs, d.needs);
+      k.f = d.f === 1 ? 1 : 0; k.y = FLOOR[k.f];
+      k.x = clamp(d.x, ...RANGE[k.f]);
+    });
+    if (Array.isArray(saved.easel) && saved.easel.length === EASEL_W * EASEL_H) world.easel = saved.easel;
+    if (Array.isArray(saved.flowers)) world.flowers = saved.flowers;
+    if (typeof saved.ball === "number") world.ball.x = saved.ball;
+  }
+  // anyone tucked in (here or on the main page) starts in bed
+  KIDS.forEach((k) => {
+    if (sleepLog[k.id]) { k.asleep = true; k.f = 1; k.x = BEDS[k.id] + 20; k.y = FLOOR[1]; k.act = "sleep"; startStep(k, sleepStep(k)); }
+  });
+  if (saved?.t) catchUp((Date.now() - saved.t) / 1000);
+}
+load();
+setInterval(save, 8000);
+addEventListener("pagehide", save);
+let hiddenAt = 0;
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) { hiddenAt = Date.now(); save(); }
+  else if (hiddenAt) { catchUp((Date.now() - hiddenAt) / 1000); hiddenAt = 0; }
+});
+
+// ---------- go ----------
+function tickClock() {
+  const d = new Date();
+  $("#clock").textContent = `${d.getHours() % 12 || 12}:${String(d.getMinutes()).padStart(2, "0")} ${d.getHours() < 12 ? "am" : "pm"} ${isNight() ? "🌙" : "☀️"}`;
+}
+tickClock(); setInterval(tickClock, 15000);
+renderCards(); setInterval(renderCards, 500);
+
+let last = performance.now();
+function frame(now) {
+  const dt = Math.min(now - last, 100) / 1000;
+  last = now;
+  updateWorld(dt);
+  KIDS.forEach((k) => updateKid(k, dt));
+  draw();
+  placeOverlays();
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

@@ -1,9 +1,9 @@
 // shared by index.html and house.html: the girls' data, what they say, and their pixel sprites
 // drawn in code on a 32×34 grid. edit the lines below to change what they say.
 const KIDS = [
-  { id: "rose",    name: "mivi",          draw: drawRoseBunny,    says: ["mivi got you a rose mama ♡", "boop!", "smell my rose bố", "i love vimi"] },
-  { id: "blossom", name: "vimi",          draw: drawBlossomBunny, says: ["flowers on my ears ✿", "carry vimi pls bố", "mama look at my feet", "mama's girl ♡", "where is mivi?"] },
-  { id: "teddy",   name: "teddy",         draw: drawBear,         says: ["teddy wants a hug ♡", "i'm fluffy", "papa is silly hehe", "teddy loves mama & papa", "papa's little girl ♡"] },
+  { id: "rose",    name: "mivi",          draw: drawRoseBunny,    back: drawRoseBunnyBack,    side: drawRoseBunnySide,    says: ["mivi got you a rose mama ♡", "boop!", "smell my rose bố", "i love vimi"] },
+  { id: "blossom", name: "vimi",          draw: drawBlossomBunny, back: drawBlossomBunnyBack, side: drawBlossomBunnySide, says: ["flowers on my ears ✿", "carry vimi pls bố", "mama look at my feet", "mama's girl ♡", "where is mivi?"] },
+  { id: "teddy",   name: "teddy",         draw: drawBear,         back: drawBearBack,         side: drawBearSide,         says: ["teddy wants a hug ♡", "i'm fluffy", "papa is silly hehe", "teddy loves mama & papa", "papa's little girl ♡"] },
 ];
 const KID_SAYS   = ["mẹ ơi!", "bố ơi!", "mama look!", "papa carry me", "con yêu mẹ ♡", "con yêu bố ♡", "play with me?", "con đói quá…", "wheee"];
 const SLEEP_TALK = ["mmm… 5 more minutes", "zzz…", "*snore*", "i'm not sleepy… *yawn*", "mẹ ơi… zzz"];
@@ -99,9 +99,82 @@ function eyes(d, l, r, y, sleep) {
   else d.px([[l, y], [r, y]], "k");
 }
 
-function sprite(kid, frame, sleep = false) {
+// views for walking around the world: "front" (towards you), "back" (away) and "side" (facing right; mirror it for left)
+const STEP = (f) => (f ? [14, 18] : [11.5, 20.5]); // where the two feet are in a side-view step
+
+function bunnyBack(d, f, fur, sole, earLining) {
+  d.part(16, 23, 7, 6.5, fur);
+  d.part(11.5, 30 - (f ? 0 : 1), 3.2, 2.3, fur); d.ell(11.5, 30.6 - (f ? 0 : 1), 1.8, 1.2, sole);
+  d.part(20.5, 30 - (f ? 1 : 0), 3.2, 2.3, fur); d.ell(20.5, 30.6 - (f ? 1 : 0), 1.8, 1.2, sole);
+  d.part(10.5, 21.5, 2, 2.6, fur); d.part(21.5, 21.5, 2, 2.6, fur);
+  d.part(7, 15, 3, 8.5, fur); d.part(25, 15, 3, 8.5, fur);
+  if (earLining) { d.ell(5.6, 16, 1, 6, earLining); d.ell(26.4, 16, 1, 6, earLining); }
+  d.part(16, 9.5, 8.5, 7, fur);
+  d.part(16, 25.5, 2.6, 2.3, fur === "w" ? "s" : "f"); // fluffy tail
+}
+function bunnySide(d, f, fur, nose, earLining) {
+  const [a, b] = STEP(f);
+  d.part(a, 30, 3.2, 2.3, fur);
+  d.part(15, 23, 6.5, 6.5, fur);
+  d.part(8.5, 25, 2.4, 2.2, fur === "w" ? "s" : "f");
+  d.part(b, 30.3, 3.2, 2.3, fur);
+  d.part(18, 10, 7.5, 6.8, fur);
+  d.part(13.5, 14.5, 2.8, 8, fur);                 // floppy ear hanging down the back of her head
+  if (earLining) d.ell(12.3, 15.5, 0.9, 6, earLining);
+  d.px([[22, 10]], "k");
+  d.px([[25, 12]], nose);
+  d.part(19.5, 21.5, 2, 2.4, fur);
+}
+
+function drawRoseBunnyBack(d, f) {
+  bunnyBack(d, f, "w", "P");
+  d.part(9.2, 18.5, 2, 1.8, "r");          // the rose peeking out
+}
+function drawRoseBunnySide(d, f) {
+  bunnySide(d, f, "w", "p");
+  d.px([[21, 12]], "P");
+  d.ell(23, 23, 0.6, 3, "G");
+  d.part(23.5, 19, 2.5, 2.2, "r"); d.px([[23, 18], [24, 19]], "R");
+  d.part(21.5, 21.5, 1.4, 0.9, "g");
+}
+function drawBlossomBunnyBack(d, f) {
+  bunnyBack(d, f, "b", "f", "f");
+  d.tex("f", (x, y) => { const h = hash(x, y) % 10; return h < 3 ? "q" : h === 3 ? "n" : null; });
+}
+function drawBlossomBunnySide(d, f) {
+  bunnySide(d, f, "b", "B", "f");
+  d.tex("f", (x, y) => { const h = hash(x, y) % 10; return h < 3 ? "q" : h === 3 ? "n" : null; });
+}
+function drawBearBack(d, f) {
+  d.part(16, 24, 7.5, 6.5, "t");
+  d.part(8, 21, 3, 3.2, "t"); d.part(24, 21, 3, 3.2, "t");
+  [[11, f ? 0 : 1], [21, f ? 1 : 0]].forEach(([x, up]) => { d.part(x, 30.5 - up, 3.4, 2.5, "t"); d.ell(x, 31 - up, 2, 1.3, "h"); });
+  d.part(9, 4.5, 3, 3, "t"); d.part(23, 4.5, 3, 3, "t");
+  d.part(16, 11, 8.5, 7.2, "t");
+  d.part(16, 27, 2, 1.8, "t");
+  d.tex("t", (x, y) => hash(x, y) % 10 < 3 ? "T" : null);
+}
+function drawBearSide(d, f) {
+  const [a, b] = STEP(f);
+  d.part(a, 30.5, 3.3, 2.5, "t");
+  d.part(15, 24, 7, 6.5, "t");
+  d.part(8.2, 26, 1.8, 1.6, "t");
+  d.part(b, 30.8, 3.3, 2.5, "t");
+  d.part(13, 5, 3, 3, "t"); d.ell(13.3, 5.3, 1.6, 1.6, "h");
+  d.part(17, 11, 8, 7, "t");
+  d.part(24, 13.5, 3.2, 2.6, "t");
+  d.part(19.5, 21.5, 2.6, 3, "t");
+  d.tex("t", (x, y) => hash(x, y) % 10 < 3 ? "T" : null);
+  d.px([[21, 10]], "k");
+  d.px([[27, 12], [27, 13], [26, 12]], "d");
+  d.px([[25, 15], [24, 15]], "d");
+  d.px([[21, 23], [22, 23], [21, 24]], "h");
+}
+
+function sprite(kid, frame, sleep = false, view = "front") {
   const d = grid();
-  kid.draw(d, frame, sleep);
+  const draw = view === "back" ? kid.back : view === "side" ? kid.side : kid.draw;
+  draw(d, frame, sleep);
   const c = document.createElement("canvas");
   c.width = GW; c.height = GH;
   const ctx = c.getContext("2d");

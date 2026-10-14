@@ -112,6 +112,22 @@
   .chip small { display: block; font: 600 11px/1.2 var(--pixel); opacity: .8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .chip .mood { font-size: 18px; }
   .tools { display: flex; gap: 6px; flex: none; }
+  .tray {
+    position: absolute; right: 8px; bottom: 8px; z-index: 3;
+    display: none; grid-template-columns: repeat(2, auto); gap: 6px;
+    background: var(--cream); border: 3px solid var(--ink); border-radius: 14px;
+    box-shadow: 4px 4px 0 var(--ink); padding: 8px;
+  }
+  .tray.open { display: grid; animation: popin .18s ease; }
+  @keyframes popin { from { transform: translateY(8px) scale(.96); opacity: 0; } }
+  .tray button {
+    font: 600 13px/1 var(--pixel); color: var(--ink); text-align: left; white-space: nowrap;
+    background: var(--pink-soft); border: 2px solid var(--ink); border-radius: 10px;
+    padding: 9px 10px; box-shadow: 2px 2px 0 var(--ink); cursor: pointer;
+  }
+  .tray button:active { transform: translate(2px,2px); box-shadow: none; }
+  .flash { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; transition: opacity .5s; }
+  .flash.on { opacity: .9; transition: none; }
   @media (max-width: 560px) {
     .chip { min-width: 0; padding-right: 4px; }
     .chip small, .chip .mood { display: none; }
@@ -136,12 +152,21 @@
     <canvas id="scene"></canvas>
     <div class="overlay" id="overlay"></div>
     <div class="toast" id="toast"></div>
+    <div class="flash" id="flash"></div>
+    <div class="tray" id="tray">
+      <button type="button" data-toy="snacks">🧺 snacks</button>
+      <button type="button" data-toy="ball">⚽ ball</button>
+      <button type="button" data-toy="bubbles">🫧 bubbles</button>
+      <button type="button" data-toy="party">🎵 dance party</button>
+      <button type="button" data-toy="dress">🎀 dress up</button>
+      <button type="button" data-toy="photo">📸 photo</button>
+    </div>
   </div>
   <div class="dock" id="dock">
     <div class="tools">
       <button class="pill on" type="button" id="autoBtn" title="follow whoever is doing something fun">🎥</button>
       <button class="pill" type="button" id="mapBtn" title="see the whole island">🗺️</button>
-      <button class="pill" type="button" id="snackBtn" title="put snacks on the picnic blanket">🧺</button>
+      <button class="pill" type="button" id="toyBtn" title="toys and things">🧸</button>
     </div>
   </div>
 </div>
@@ -509,7 +534,7 @@ function tintNow() {
 }
 
 // ---------- critters ----------
-const world = { t: 0, parts: [], snack: 0 };
+const world = { t: 0, parts: [], snack: 0, ball: null, bubbles: [], party: 0, partyAt: [0, 0], duckGoal: null };
 const butterflies = [...Array(5)].map((_, i) => ({ x: rand(60, WW - 60), y: rand(60, 360), vx: 0, vy: 0, a: rand(0, 6), c: ["#f48fb4", "#ffd966", "#fff", "#ffb7d0", "#b7d8ff"][i] }));
 const fireflies = [...Array(26)].map(() => ({ x: rand(20, WW - 20), y: rand(30, 380), a: rand(0, 6) }));
 const pondTiles = allTiles((x, y) => tileAt(x, y) === WATER && y < 14);
@@ -578,7 +603,7 @@ function walk(k, dt, speed = k.speed) {
 // an activity is a list of steps: { go: [tx, ty] } walks there,
 // { stay: seconds, ... } does something there, { run(dt, s) } is custom and returns true when done.
 const day = () => !isNight();
-const busy = (o) => o.held || o.home || ["tag", "chat", "sleep", "slide", "swing"].includes(o.act);
+const busy = (o) => o.held || o.patted || o.home || ["tag", "chat", "sleep", "slide", "swing", "hide", "party", "stroll"].includes(o.act);
 const ACTS = {
   explore: {
     w: () => 1.4,
@@ -609,11 +634,16 @@ const ACTS = {
     w: () => 1,
     plan(k) {
       const [x, y] = pick(SPOTS.pond);
+      const feed = Math.random() < 0.45;
       return [{ go: [x, y], label: "going to the pond" },
-        { stay: rand(8, 13), label: pick(["skipping stones 🪨", "watching the ducks 🦆", "looking at the fish"]), pose: "sit", face: facing(x, y, WATER),
+        { stay: rand(8, 13), label: feed ? "feeding the ducks 🦆" : pick(["skipping stones 🪨", "looking at the fish"]), pose: "sit", face: facing(x, y, WATER),
           tick(dt) {
             k.needs.fun = Math.min(100, k.needs.fun + 2 * dt);
-            if (Math.random() < dt * 0.5) { const d = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] }[k.dir]; particle("splash", k.x + d[0] * rand(18, 40), k.y - 4 + d[1] * rand(14, 30), "#e8f7ff", 4, 3, -14); }
+            const d = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] }[k.dir];
+            if (feed) {
+              world.duckGoal = { x: k.x + d[0] * 30, y: k.y - 4 + d[1] * 26, until: world.t + 1 };
+              if (Math.random() < dt * 1.5) particle("crumb", k.x + d[0] * rand(10, 26), k.y - 8 + d[1] * rand(8, 20), "#e9c9a8", 2, 3, -20);
+            } else if (Math.random() < dt * 0.5) particle("splash", k.x + d[0] * rand(18, 40), k.y - 4 + d[1] * rand(14, 30), "#e8f7ff", 4, 3, -14);
           } }];
     },
   },
@@ -728,12 +758,120 @@ const ACTS = {
     w: () => 0.3,
     plan(k) { return [{ go: [18, 10], label: "reading the sign" }, { stay: 3, face: "up", label: "reading the sign", start() { say(k, SIGN_TEXT, 2600); } }]; },
   },
+  ball: {
+    w: () => (world.ball ? 3 : 0),
+    plan(k) {
+      return [{ label: "playing ball ⚽", dur: rand(12, 18), run(dt, s) {
+        const b = world.ball;
+        if (!b) return true;
+        s.re = (s.re || 0) - dt;
+        if (Math.hypot(b.x - k.x, b.y - k.y) > 10) {
+          if (s.re <= 0) { s.re = 0.5; const t = tileOf(b.x, b.y); setPath(k, ...(walkable(...t) ? t : nearestWalkable(...t))); }
+          walk(k, dt, k.speed * 1.4);
+        } else if (Math.hypot(b.vx, b.vy) < 40) {
+          const mate = KIDS.find((o) => o !== k && o.act === "ball" && !o.home);
+          const ang = mate && Math.random() < 0.6 ? Math.atan2(mate.y - b.y, mate.x - b.x) : rand(0, Math.PI * 2);
+          const pw = rand(90, 150);
+          b.vx = Math.cos(ang) * pw; b.vy = Math.sin(ang) * pw; b.vh = rand(30, 70);
+          faceTo(k, b.x + b.vx, b.y + b.vy); k.hop = 0.6;
+          if (Math.random() < 0.3) say(k, pick(["kick!", "pass!", "goal!!", "catch!"]), 1100);
+          k.needs.fun = Math.min(100, k.needs.fun + 8);
+        }
+        return s.t > s.dur;
+      } }];
+    },
+  },
+  bubbles: {
+    w: () => (world.bubbles.length ? 5 : 0),
+    plan(k) {
+      return [{ label: "popping bubbles 🫧", dur: rand(8, 14), run(dt, s) {
+        if (!world.bubbles.length) return true;
+        if (!s.b || s.b.popped) { s.b = world.bubbles.reduce((best, b) => (!best || Math.hypot(b.x - k.x, b.y - k.y) < Math.hypot(best.x - k.x, best.y - k.y) ? b : best), null); s.re = 0; }
+        const b = s.b;
+        s.re -= dt;
+        if (s.re <= 0) { s.re = 0.5; const t = tileOf(b.x, b.y); setPath(k, ...(walkable(...t) ? t : nearestWalkable(...t))); }
+        walk(k, dt, k.speed * 1.4);
+        if (Math.hypot(b.x - k.x, b.y - k.y) < 12 && b.alt < 34) {
+          k.hop = 1; popBubble(b);
+          if (Math.random() < 0.4) say(k, pick(["pop!", "got one!", "hehe bubbles"]), 1000);
+          k.needs.fun = Math.min(100, k.needs.fun + 5);
+        }
+        return s.t > s.dur;
+      } }];
+    },
+  },
+  party: {
+    w: () => 0,
+    plan(k) {
+      const a = (KIDS.indexOf(k) / KIDS.length) * Math.PI * 2, c = world.partyAt;
+      const t = tileOf(c[0] + Math.cos(a) * 22, c[1] + Math.sin(a) * 16);
+      return [{ go: walkable(...t) ? t : nearestWalkable(...t), label: "going to the party!" },
+        { stay: Math.max(2, world.party), label: "dancing 💃", pose: "dance",
+          tick(dt, s) { s.dur = s.t + Math.max(0, world.party); k.needs.fun = Math.min(100, k.needs.fun + 4 * dt); } }];
+    },
+  },
+  hide: {
+    w: (k) => (day() && others(k).some((o) => !busy(o) && INTERRUPTIBLE.includes(o.act)) ? 0.6 : 0),
+    plan(k) {
+      const hiders = others(k).filter((o) => !busy(o) && INTERRUPTIBLE.includes(o.act));
+      if (!hiders.length) return ACTS.explore.plan(k);
+      const spots = HIDE_SPOTS.slice().sort(() => Math.random() - 0.5);
+      const game = { found: new Set(), over: false, spots: new Map() };
+      hiders.forEach((h, i) => {
+        game.spots.set(h, spots[i]);
+        endStep(h); h.path = []; h.act = "hide";
+        h.steps = [
+          { go: spots[i], label: "running to hide 🙈" },
+          { label: "hiding 🙈", pose: "crouch", run() { return game.found.has(h) || game.over; } },
+          { stay: 1.5, label: "found!", start() { h.hop = 1; } },
+        ];
+      });
+      // she counts, then looks in a couple of wrong places before finding each sister
+      const steps = [{ stay: 6, label: "counting… 🙈", face: "up", tick(dt, s) { const n = Math.floor(s.t) + 1; if (n !== s.n) { s.n = n; say(k, n < 6 ? `${n}…` : "ready or not!", 900); } } }];
+      hiders.forEach((h) => [pick(HIDE_SPOTS), game.spots.get(h)].forEach((spot) => {
+        steps.push({ go: spot, label: "looking for her sisters 👀" });
+        steps.push({ label: "looking…", run(dt, s) {
+          if (s.t < 0.4) return false;
+          const f = hiders.find((o) => !game.found.has(o) && Math.hypot(o.x - k.x, o.y - k.y) < 20);
+          if (f) { game.found.add(f); say(k, pick(["found you!", "gotcha!", "i see you!"]), 1400); setTimeout(() => say(f, pick(["aww!", "hehe how?", "no fair!"]), 1400), 400); hearts(f, 3); }
+          return true;
+        } });
+      }));
+      steps.push({ stay: 1.5, label: "that was fun!", start() { game.over = true; say(k, pick(["found everyone!", "my turn to hide next!", "that was fun!"]), 1500); } });
+      return steps;
+    },
+  },
+  stroll: {
+    w: (k) => (day() && partnerFor(k) ? 0.5 : 0),
+    plan(k) {
+      const p = partnerFor(k);
+      if (!p) return ACTS.explore.plan(k);
+      endStep(p); p.steps = []; p.path = []; p.act = "stroll";
+      startStep(p, { label: `holding hands with ${k.name} 🤝`, run(dt) {
+        if (k.act !== "stroll" || k.home || k.held) return true;
+        const back = { up: [0, 1], down: [0, -1], left: [1, 0], right: [-1, 0] }[k.dir];
+        const side = { up: [1, 0], down: [-1, 0], left: [0, 1], right: [0, -1] }[k.dir];
+        let gx = k.x + side[0] * 21 + back[0] * 3, gy = k.y + side[1] * 8 + back[1] * 3;
+        if (!walkable(...tileOf(gx, gy))) { gx = k.x + back[0] * 14; gy = k.y + back[1] * 10; }
+        const dx = gx - p.x, dy = gy - p.y, d = Math.hypot(dx, dy);
+        if (d > 1) { const st = Math.min(d, k.speed * 1.3 * dt); p.x += (dx / d) * st; p.y += (dy / d) * st; p.dist += st; if (p.dist > 7) { p.dist = 0; p.frame ^= 1; } }
+        p.dir = k.dir;
+        if (Math.random() < dt * 0.6) particle("heart", (k.x + p.x) / 2, Math.min(k.y, p.y) - 22, "#ff7fa8", 1, 2);
+        return false;
+      } });
+      return [{ go: randomTile(10, tileOfKid(k)), label: `holding hands with ${p.name} 🤝`, start() { say(k, pick(["hold my hand!", "let's go for a walk", "come with me!"]), 1400); } },
+        { stay: 2, label: `holding hands with ${p.name} 🤝`, end() { hearts(k, 3); hearts(p, 3); k.needs.love = Math.min(100, k.needs.love + 15); p.needs.love = Math.min(100, p.needs.love + 15); } }];
+    },
+  },
   idle: {
     w: () => 0.8,
     plan(k) { return [{ stay: rand(3, 6), label: "daydreaming ☁️", start() { if (Math.random() < 0.4) say(k, pick([...k.says, ...KID_SAYS])); } }]; },
   },
 };
 const PICNIC_SPOTS = SPOTS.picnic;
+// hiding places: behind tree canopies and in the tall grass
+const HIDE_SPOTS = [...objs.filter((o) => o.type === "tree" && o.tx > 1 && o.tx < 42 && o.ty > 0).flatMap((o) => [[o.tx, o.ty], [o.tx + 1, o.ty]]),
+  ...allTiles((x, y) => tileAt(x, y) === TALL)].filter(([x, y]) => walkable(x, y) && findPath(...DOOR, x, y));
 const CHAT = ["hehe", "💕", "best sisters ♡", "wanna play?", "i love u", "🎀", "secret: mama is the best", "papa is so silly", "shhh hehe", "pinky promise", "look a butterfly!"];
 const INTERRUPTIBLE = ["idle", "explore", "pond", "bench", "beach", "flowers", "sign"];
 function partnerFor(k) {
@@ -771,7 +909,7 @@ function leaveHome(k) {
 }
 
 // ---------- choosing and running ----------
-const THINK = { flowers: "🌷", butterfly: "🦋", pond: "🦆", swing: "🎀", slide: "🛝", sandcastle: "🏰", beach: "🌊", shells: "🐚", picnic: "🍓", nap: "💤", chat: "💬", tag: "🏃‍♀️", home: "🏠" };
+const THINK = { ball: "⚽", bubbles: "🫧", hide: "🙈", stroll: "🤝", flowers: "🌷", butterfly: "🦋", pond: "🦆", swing: "🎀", slide: "🛝", sandcastle: "🏰", beach: "🌊", shells: "🐚", picnic: "🍓", nap: "💤", chat: "💬", tag: "🏃‍♀️", home: "🏠" };
 function chooseActivity(k) {
   const entries = Object.entries(ACTS).map(([id, a]) => [id, Math.max(0, a.w(k)) * (id === k.last ? 0.25 : 1)]);
   let r = Math.random() * entries.reduce((s, [, w]) => s + w, 0), id = "idle";
@@ -818,6 +956,18 @@ function updateKid(k, dt) {
   for (const key in n) n[key] = clamp(n[key], 3, 100);
   k.hop = Math.max(0, k.hop - dt * 4);
   if (k.held) { k.dist += dt; if (k.dist > 0.09) { k.dist = 0; k.frame ^= 1; } return; }
+  if (k.patted) {
+    k.patT = (k.patT || 0) + dt;
+    n.love = Math.min(100, n.love + 12 * dt);
+    if (k.patT > 0.3) { k.patT = 0; particle("heart", k.x + rand(-6, 6), k.y - 30, pick(["#f48fb4", "#ff7fa8", "#ffb7d0"]), 1, 3); tone(rand(300, 360), { type: "sine", dur: 0.18, vol: 0.05 }); }
+    return;
+  }
+  if (k.spin > 0) {
+    k.spin -= dt; k.spinT = (k.spinT || 0) + dt;
+    if (k.spinT > 0.08) { k.spinT = 0; k.dir = { down: "left", left: "up", up: "right", right: "down" }[k.dir]; }
+    if (Math.random() < dt * 8) particle("star", k.x + rand(-10, 10), k.y - 34, pick(["#ffd966", "#fff"]), 1, 2);
+    return;
+  }
   if (k.lift > 0) { k.lift = Math.max(0, k.lift - dt * 60); }
 
   if (!k.step) {
@@ -833,7 +983,14 @@ function updateKid(k, dt) {
   if (s.run) { if (s.run.call(s, dt, s)) { k.frame = 0; endStep(k); } return; }
   if (s.faceKid) faceTo(k, s.faceKid.x, s.faceKid.y);
   s.tick?.call(s, dt, s);
-  k.frame = 0;
+  if (k.pose === "dance") {
+    s.beat = (s.beat || 0) + dt;
+    if (s.beat > 0.4) {
+      s.beat = 0; k.frame ^= 1; k.hop = 1;
+      k.dir = { down: "left", left: "up", up: "right", right: "down" }[k.dir];
+      particle("note", k.x + rand(-10, 10), k.y - 34, pick(["#f48fb4", "#ffd966", "#9db8ff"]), 1, 2);
+    }
+  } else k.frame = 0;
   if (s.t >= s.dur) endStep(k);
 }
 
@@ -848,6 +1005,11 @@ function updateWorld(dt) {
   });
   fireflies.forEach((f) => { f.a += dt; f.x += Math.cos(f.a * 0.7) * 6 * dt; f.y += Math.sin(f.a * 0.9) * 5 * dt; });
   ducks.forEach((d) => {
+    const g = world.duckGoal;
+    if (g && g.until > world.t) {
+      d.vx = clamp(d.vx + Math.sign(g.x - d.x) * 14 * dt, -12, 12); d.vy = clamp(d.vy + Math.sign(g.y - d.y) * 10 * dt, -8, 8);
+      if (Math.hypot(g.x - d.x, g.y - d.y) < 8) { d.vx *= 0.9; d.vy *= 0.9; }
+    }
     d.x += d.vx * dt; d.y += d.vy * dt;
     const [tx, ty] = tileOf(d.x, d.y);
     if (tileAt(tx, ty) !== WATER || tileAt(...tileOf(d.x + Math.sign(d.vx) * 8, d.y)) !== WATER) { d.vx = -d.vx; d.x += d.vx * dt * 2; }
@@ -857,10 +1019,31 @@ function updateWorld(dt) {
   if (Math.random() < dt * 0.25) { const [x, y] = pick(pondTiles); particle("splash", x * T + 8, y * T + 8, "#e8f7ff", 5, 3, -18); }
   if (!night && Math.random() < dt * 1.2) { const o = pick(objs.filter((o) => o.type === "tree" && o.kind === "cherry")); particle("petal", o.tx * T + rand(4, 28), o.ty * T + rand(0, 16), pick(["#ffb7d0", "#fff", "#ff9fbf"]), 1, 2, 6); }
   objs.forEach((o) => { if (o.shake) o.shake = Math.max(0, o.shake - dt * 3); });
+  // the ball rolls, bounces, and stops at walls and water
+  const b = world.ball;
+  if (b) {
+    const nx = b.x + b.vx * dt, ny = b.y + b.vy * dt;
+    if (walkable(...tileOf(nx, b.y))) b.x = nx; else b.vx = -b.vx * 0.6;
+    if (walkable(...tileOf(b.x, ny))) b.y = ny; else b.vy = -b.vy * 0.6;
+    const f = Math.exp(-1.1 * dt); b.vx *= f; b.vy *= f;
+    b.roll += Math.hypot(b.vx, b.vy) * dt / 3;
+    b.vh -= 300 * dt; b.h += b.vh * dt;
+    if (b.h < 0) { b.h = 0; b.vh = Math.abs(b.vh) > 25 ? -b.vh * 0.45 : 0; }
+  }
+  world.bubbles.forEach((bb) => {
+    bb.life -= dt; bb.alt += 3 * dt;
+    bb.x += bb.vx * dt + Math.sin(world.t * 2 + bb.ph) * 5 * dt; bb.y += bb.vy * dt;
+    if (bb.life <= 0 || bb.alt > 60) popBubble(bb, true);
+  });
+  world.bubbles = world.bubbles.filter((bb) => !bb.popped);
+  if (world.party > 0) {
+    world.party -= dt;
+    if (Math.random() < dt * 4) particle(pick(["note", "star"]), world.partyAt[0] + rand(-40, 40), world.partyAt[1] - rand(10, 40), pick(["#f48fb4", "#ffd966", "#9db8ff", "#fff"]), 1, 2);
+  }
   world.parts = world.parts.filter((p) => {
     p.life -= dt; p.x += p.vx * dt; p.y += p.vy * dt;
     if (p.type === "petal") { p.vx += Math.sin(world.t * 3 + p.y) * 10 * dt; p.vy = Math.min(p.vy + 10 * dt, 14); }
-    else if (p.type !== "heart" && p.type !== "z" && p.type !== "note") p.vy += 90 * dt;
+    else if (!["heart", "z", "note", "star"].includes(p.type)) p.vy += 90 * dt;
     return p.life > 0;
   });
 }
@@ -891,13 +1074,15 @@ function kidDraw(k) {
   // shadow
   ctx.fillStyle = "rgba(60,40,70,.18)";
   ctx.fillRect(x - 8, y - 1, 16, 3);
-  const v = k.held ? "front" : k.dir === "up" ? "back" : k.dir === "down" ? "front" : "side";
-  const img = k.spr[v][k.frame];
+  const v = k.held || k.patted ? "front" : k.dir === "up" ? "back" : k.dir === "down" ? "front" : "side";
+  const img = k.patted ? k.sleepSpr : k.spr[v][k.frame];
   ctx.save();
   ctx.translate(x + ox, y + oy);
   if (k.held) ctx.rotate(Math.sin(world.t * 12) * 0.15);
+  if (k.patted) ctx.scale(1 + Math.sin(world.t * 10) * 0.03, 1 - Math.sin(world.t * 10) * 0.03);
   if (k.dir === "left" && v === "side") ctx.scale(-1, 1);
   ctx.drawImage(img, -16, -32);
+  if (k.acc) drawAcc(k, v);
   const it = k.item || (k.gift && !k.held ? k.gift : null);
   if (it && ITEMS[it] && v !== "back") pixels(ctx, ITEMS[it], v === "side" ? 8 : 6, -16, ITEM_COLORS);
   ctx.restore();
@@ -909,6 +1094,49 @@ function kidDraw(k) {
     for (let i = -9; i <= 9; i += 3) pixels(ctx, ["x.x", ".x.", ".x."], x + i - 1, y - 6 + (Math.abs(i) % 2), { x: "#7fbe68" });
     R(ctx, "#a6d98d", x - 10, y - 3, 20, 4);
   }
+}
+
+// ---------- dress up ----------
+const ACC = [null, "bow", "crown", "glasses", "party", "tiara"];
+const ACC_NAME = { bow: "a pink bow 🎀", crown: "a flower crown 🌸", glasses: "cool sunglasses 😎", party: "a party hat 🥳", tiara: "a little tiara 👑" };
+const ACC_COLORS = { p: "#ff7fa8", k: "#e2405a", y: "#ffd966", g: "#86b35a", w: "#ffffff", b: "#2b1b24", l: "#fff1a8", r: "#f48fb4" };
+function drawAcc(k, v) {
+  const bear = k.id === "teddy";
+  const [ax, ay] = v === "side" ? [bear ? 17 : 18, bear ? 4 : 3] : [16, bear ? 4 : 3];
+  const X = (x) => -16 + x, Y = (y) => -32 + y;
+  if (k.acc === "bow") pixels(ctx, ["pp...pp", "ppp.ppp", "pppkppp", "ppp.ppp", "pp...pp"], X(bear || v === "side" ? ax - 3 : ax - 9), Y(ay - (bear ? 4 : 2)), ACC_COLORS);
+  if (k.acc === "crown") pixels(ctx, ["pyp.ypy.pyp", ".g...g...g.", "ggggggggggg"], X(ax - 5), Y(ay - 3), ACC_COLORS);
+  if (k.acc === "party") pixels(ctx, ["...w...", "...p...", "..pyp..", "..ypy..", ".pypyp.", ".ypypy.", "pypypyp"], X(ax - 3), Y(ay - 9), ACC_COLORS);
+  if (k.acc === "tiara") pixels(ctx, ["y.y.y", "yyryy", "yyyyy"], X(ax - 2), Y(ay - 3), ACC_COLORS);
+  if (k.acc === "glasses" && v !== "back") {
+    const ey = bear ? 11 : 10;
+    if (v === "front") { R(ctx, "#2b1b24", X(10), Y(ey - 1), 5, 3); R(ctx, "#2b1b24", X(17), Y(ey - 1), 5, 3); R(ctx, "#2b1b24", X(15), Y(ey - 1), 2, 1); R(ctx, "#fff", X(11), Y(ey - 1), 1, 1); R(ctx, "#fff", X(18), Y(ey - 1), 1, 1); }
+    else { const ex = bear ? 21 : 22; R(ctx, "#2b1b24", X(ex - 2), Y(ey - 1), 5, 3); R(ctx, "#2b1b24", X(ex - 7), Y(ey - 1), 5, 1); R(ctx, "#fff", X(ex - 1), Y(ey - 1), 1, 1); }
+  }
+}
+
+function drawBall() {
+  const b = world.ball, x = Math.round(b.x), y = Math.round(b.y);
+  ctx.fillStyle = "rgba(60,40,70,.2)"; ctx.fillRect(x - 4, y - 1, 8, 2);
+  const cy = y - 4 - Math.round(b.h);
+  for (let j = -4; j <= 4; j++) for (let i = -4; i <= 4; i++) {
+    const d = i * i + j * j;
+    if (d <= 11) R(ctx, (Math.floor((i + 4 + b.roll) / 3) % 2) ? "#f48fb4" : "#fff1a8", x + i, cy + j, 1, 1);
+    else if (d <= 18) R(ctx, INK, x + i, cy + j, 1, 1);
+  }
+  R(ctx, "#fff", x - 2, cy - 2, 1, 1);
+}
+function drawBubbles() {
+  world.bubbles.forEach((b) => {
+    const x = Math.round(b.x), y = Math.round(b.y - b.alt), r = b.r;
+    ctx.fillStyle = "rgba(60,40,70,.12)"; ctx.fillRect(x - 2, Math.round(b.y), 4, 1);
+    for (let j = -r - 1; j <= r + 1; j++) for (let i = -r - 1; i <= r + 1; i++) {
+      const d = Math.sqrt(i * i + j * j);
+      if (d <= r - 0.6) R(ctx, "rgba(255,255,255,.28)", x + i, y + j, 1, 1);
+      else if (d <= r + 0.5) R(ctx, (i + j) % 3 === 0 ? "#ff9fc6" : "#8fd0f2", x + i, y + j, 1, 1);
+    }
+    R(ctx, "#fff", x - 1, y - r + 1, 2, 1);
+  });
 }
 
 function drawCritters(night) {
@@ -971,6 +1199,8 @@ function drawParticles() {
     else if (p.type === "z") pixels(ctx, ["xxx", "..x", ".x.", "xxx"], x - 1, y - 2, { x: p.color });
     else if (p.type === "petal") R(ctx, p.color, x, y, 2, 1);
     else if (p.type === "leaf") R(ctx, p.color, x, y, 1, 2);
+    else if (p.type === "note") pixels(ctx, [".xx", ".x.", ".x.", "xx."], x - 1, y - 2, { x: p.color });
+    else if (p.type === "star") pixels(ctx, [".x.", "xxx", ".x."], x - 1, y - 1, { x: p.color });
     else R(ctx, p.color, x, y, 1, 1);
   });
   ctx.globalAlpha = 1;
@@ -987,12 +1217,14 @@ function draw() {
   // everything that stands up, sorted so things in front cover things behind
   const list = objs.map((o) => ({ y: o.base, fn: () => DRAW_OBJ[o.type](ctx, o) }));
   KIDS.forEach((k) => list.push({ y: k.y + (k.pose === "swing" ? 4 : 0) + (k.held ? 100 : 0), fn: () => kidDraw(k) }));
+  if (world.ball) list.push({ y: world.ball.y, fn: drawBall });
   list.sort((a, b) => a.y - b.y).forEach((d) => d.fn());
   drawCritters(night);
+  drawBubbles();
   drawParticles();
   drawNight(tint, night);
   // a little marker over whoever you picked
-  if (selected && !selected.home) {
+  if (selected && !selected.home && !world.photo) {
     const bob = Math.round(Math.sin(world.t * 5));
     pixels(ctx, ["xxxxx", ".xxx.", "..x.."], Math.round(selected.x) - 2, Math.round(selected.y) - 44 + bob - Math.round(selected.lift), { x: "#ffd966" });
   }
@@ -1088,10 +1320,104 @@ function tapKid(k) {
     k.gift = null;
     return;
   }
+  k.taps = (k.taps || []).filter((t) => world.t - t < 2.2);
+  k.taps.push(world.t);
+  if (k.taps.length >= 5) {
+    k.taps = []; k.spin = 1.3;
+    sfx.boing(); tone(900, { type: "sine", slide: 300, dur: 0.6, vol: 0.08 });
+    say(k, pick(["hehe stop it papa! 😵‍💫", "i'm dizzy…", "the world is spinning!", "again again!"]), 1800);
+    return;
+  }
   sfx.squeak(); k.hop = 1;
   k.needs.love = Math.min(100, k.needs.love + 8);
   hearts(k, 4);
   say(k, pick([...k.says, ...KID_SAYS]));
+}
+
+// ---------- toys ----------
+function viewCenter() {
+  const [cx, cy] = mapMode ? feetOf(21, 16) : [cam.x + canvas.width / 2, cam.y + canvas.height / 2 + 8];
+  const [tx, ty] = nearestWalkable(...tileOf(cx, cy));
+  return feetOf(tx, ty);
+}
+const outside = () => KIDS.filter((k) => !k.home && !k.held && !k.patted);
+function throwBall([x, y]) {
+  world.ball = { x, y, vx: rand(-40, 40), vy: rand(-20, 20), h: 40, vh: 0, roll: 0 };
+  sfx.boing(); toast("a ball! ⚽ tap it to kick it");
+  outside().sort((a, b) => Math.hypot(a.x - x, a.y - y) - Math.hypot(b.x - x, b.y - y)).slice(0, 2).forEach((k) => { interrupt(k, "ball"); say(k, pick(["ball!!", "my ball!", "kick it to me!"]), 1200); });
+}
+function popBubble(b, quiet = false) {
+  if (b.popped) return;
+  b.popped = true;
+  for (let i = 0; i < 6; i++) particle("star", b.x + Math.cos(i) * b.r, b.y - b.alt + Math.sin(i) * b.r, pick(["#c9efff", "#ffc4dd", "#fff"]), 1, 1);
+  if (!quiet) tone(rand(1300, 1700), { type: "sine", slide: 2400, dur: 0.06, vol: 0.06 });
+}
+function blowBubbles([x, y]) {
+  toast("bubbles! 🫧 pop them before the girls do");
+  for (let i = 0; i < 14; i++) setTimeout(() => {
+    world.bubbles.push({ x: x + rand(-50, 50), y: y + rand(-30, 30), alt: rand(4, 12), r: irand(3, 5), vx: rand(-6, 6), vy: rand(-4, 4), life: rand(12, 20), ph: rand(0, 6) });
+    tone(rand(700, 1100), { type: "sine", slide: 1500, dur: 0.08, vol: 0.03 });
+  }, i * 130);
+  setTimeout(() => outside().forEach((k) => interrupt(k, "bubbles")), 400);
+}
+function danceParty(c) {
+  world.party = 12; world.partyAt = c;
+  toast("dance party! 🎵");
+  const tune = [523, 659, 784, 659, 587, 698, 880, 698, 523, 659, 784, 1047, 988, 784, 659, 587];
+  for (let i = 0; i < 48; i++) {
+    tone(tune[i % tune.length], { type: "square", dur: 0.16, vol: 0.035, at: i * 0.25 });
+    if (i % 2 === 0) tone([131, 165, 196, 147][Math.floor(i / 8) % 4], { type: "triangle", dur: 0.22, vol: 0.08, at: i * 0.25 });
+  }
+  outside().forEach((k) => { interrupt(k, "party"); say(k, pick(["party!!", "dance with me!", "yay music!"]), 1200); });
+}
+function dressUp() {
+  const k = selected;
+  if (!k || k.home) { toast("tap a girl first, then dress her up 🎀"); return; }
+  k.acc = ACC[(ACC.indexOf(k.acc ?? null) + 1) % ACC.length];
+  save();
+  sfx.gift(); k.hop = 1; particle("star", k.x, k.y - 34, "#ffd966", 6, 8);
+  toast(k.acc ? `${k.name} is wearing ${ACC_NAME[k.acc]}` : `${k.name} took it off`);
+  say(k, k.acc ? pick(["do i look cute?", "ta-da! 🎀", "mama look!", "so pretty!"]) : "hehe", 1500);
+}
+function takePhoto() {
+  const shown = KIDS.filter((k) => !k.home && k.x > cam.x && k.x < cam.x + canvas.width && k.y > cam.y && k.y < cam.y + canvas.height + 24);
+  shown.forEach((k) => { if (!k.held && !k.patted && k.pose !== "nap" && k.pose !== "swing") k.dir = "down"; k.hop = 1; say(k, pick(["cheese!", "✌️", "say kimchi!", "pose!"]), 1400); });
+  tone(1800, { type: "square", dur: 0.03, vol: 0.05 });
+  setTimeout(() => {
+    tone(2600, { type: "square", dur: 0.04, vol: 0.06 }); tone(900, { type: "sine", slide: 400, dur: 0.15, vol: 0.06, at: 0.04 });
+    world.photo = true; draw(); world.photo = false;
+    const S = mapMode ? 1.5 : 3, pw = Math.round(canvas.width * S), ph = Math.round(canvas.height * S);
+    const out = canvasOf(pw + 48, ph + 120, (g) => {
+      g.fillStyle = "#fffaf0"; g.fillRect(0, 0, pw + 48, ph + 120);
+      g.strokeStyle = "#6b3a55"; g.lineWidth = 6; g.strokeRect(3, 3, pw + 42, ph + 114);
+      g.imageSmoothingEnabled = false; g.drawImage(canvas, 24, 24, pw, ph);
+      g.fillStyle = "#6b3a55"; g.font = "600 30px 'Pixelify Sans', monospace";
+      g.fillText("our little island ♡", 28, ph + 76);
+      g.font = "600 20px 'Pixelify Sans', monospace"; g.textAlign = "right";
+      g.fillText(new Date().toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" }).toLowerCase(), pw + 20, ph + 76);
+      [[pw - 34, ph + 88, "#f48fb4"], [pw - 6, ph + 82, "#ffd966"]].forEach(([x, y, c]) => HEART.forEach((row, j) => [...row].forEach((ch, i) => { if (ch === "x") R(g, c, x + i * 4, y + j * 4, 4, 4); })));
+    });
+    const fl = $("#flash"); fl.classList.add("on"); requestAnimationFrame(() => requestAnimationFrame(() => fl.classList.remove("on")));
+    out.toBlob((blob) => {
+      if (!blob) return;
+      const file = new File([blob], `our-little-island-${Date.now()}.png`, { type: "image/png" });
+      if (matchMedia("(pointer: coarse)").matches && navigator.canShare?.({ files: [file] })) navigator.share({ files: [file], title: "our little island" }).catch(() => {});
+      else { const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = file.name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 5000); }
+      toast(shown.length ? "photo saved ♡ 📸" : "photo saved 📸 (nobody was in it… follow a girl first!)");
+    }, "image/png");
+  }, 450);
+}
+function tapToy(p) {
+  const bub = world.bubbles.find((b) => Math.hypot(p.x - b.x, p.y - (b.y - b.alt)) < b.r + 4);
+  if (bub) { popBubble(bub); return true; }
+  const b = world.ball;
+  if (b && Math.hypot(p.x - b.x, p.y - (b.y - 4 - b.h)) < 10) {
+    const ang = Math.atan2(b.y - p.y - 4, b.x - p.x) + rand(-0.4, 0.4);
+    b.vx = Math.cos(ang) * 160; b.vy = Math.sin(ang) * 160; b.vh = 70;
+    sfx.boing();
+    return true;
+  }
+  return false;
 }
 
 let knocks = 0;
@@ -1158,11 +1484,18 @@ let drag = null;
 canvas.addEventListener("pointerdown", (e) => {
   const p = toWorld(e);
   canvas.setPointerCapture(e.pointerId);
-  drag = { k: mapMode ? null : kidAt(p), p, cx: e.clientX, cy: e.clientY, camX: cam.x, camY: cam.y, moved: false };
-  if (mapMode) drag.k = kidAt(p);
+  drag = { k: kidAt(p), p, cx: e.clientX, cy: e.clientY, camX: cam.x, camY: cam.y, moved: false };
+  const k = drag.k, d = drag;
+  // hold your finger on her for a pat
+  if (k) d.patTimer = setTimeout(() => {
+    if (drag !== d || d.moved) return;
+    d.pat = true; k.patted = true; k.dir = "down";
+    audio(); select(k);
+    say(k, pick(["mmm ♡", "hehe", "pat pat", "more pls"]), 1200);
+  }, 420);
 });
 canvas.addEventListener("pointermove", (e) => {
-  if (!drag) return;
+  if (!drag || drag.pat) return;
   if (!drag.moved && Math.hypot(e.clientX - drag.cx, e.clientY - drag.cy) > 6) {
     drag.moved = true;
     const k = drag.k;
@@ -1179,7 +1512,13 @@ canvas.addEventListener("pointermove", (e) => {
 function drop(e) {
   if (!drag) return;
   const d = drag; drag = null;
-  if (!d.moved) { if (d.k) tapKid(d.k); else tapWorld(d.p) || select(null); return; }
+  clearTimeout(d.patTimer);
+  if (d.pat) {
+    d.k.patted = false; d.k.hop = 1;
+    say(d.k, pick(["hehe more!", "that tickles!", "i love pats ♡", "mama's hands are warm", "again?"]), 1600);
+    return;
+  }
+  if (!d.moved) { if (d.k) tapKid(d.k); else tapToy(d.p) || tapWorld(d.p) || select(null); return; }
   const k = d.k;
   if (!k) return;
   k.held = false;
@@ -1210,7 +1549,21 @@ function toggleMap() {
   fit();
 }
 $("#mapBtn").addEventListener("click", () => { audio(); sfx.pop(); toggleMap(); });
-$("#snackBtn").addEventListener("click", () => { audio(); snacks(); });
+const closeTray = () => { $("#tray").classList.remove("open"); $("#toyBtn").classList.remove("on"); };
+$("#toyBtn").addEventListener("click", () => { audio(); sfx.pop(); const open = $("#tray").classList.toggle("open"); $("#toyBtn").classList.toggle("on", open); });
+$("#tray").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-toy]");
+  if (!b) return;
+  audio();
+  const toy = b.dataset.toy;
+  closeTray();
+  if (toy === "snacks") snacks();
+  if (toy === "ball") throwBall(viewCenter());
+  if (toy === "bubbles") blowBubbles(viewCenter());
+  if (toy === "party") danceParty(viewCenter());
+  if (toy === "dress") dressUp();
+  if (toy === "photo") takePhoto();
+});
 
 // ---------- the girls' chips ----------
 const MOOD = (n) => (n.energy < 20 ? "🥱" : n.hunger < 25 ? "🥺" : (n.hunger + n.energy + n.fun + n.love) / 4 > 70 ? "🥰" : "😊");
@@ -1235,7 +1588,7 @@ function renderChips() {
 function save() {
   store.set("world", JSON.stringify({
     t: Date.now(),
-    kids: Object.fromEntries(KIDS.map((k) => [k.id, { needs: k.needs, x: k.x, y: k.y, gift: k.gift }])),
+    kids: Object.fromEntries(KIDS.map((k) => [k.id, { needs: k.needs, x: k.x, y: k.y, gift: k.gift, acc: k.acc || null }])),
     castle: CASTLE.level, shells: shells.length,
   }));
 }
@@ -1261,6 +1614,7 @@ function catchUp(seconds) {
       const [tx, ty] = tileOf(d.x, d.y);
       if (walkable(tx, ty)) [k.x, k.y] = feetOf(tx, ty);
       k.gift = d.gift || null;
+      k.acc = ACC.includes(d.acc) ? d.acc : null;
     });
     if (typeof saved.castle === "number") CASTLE.level = saved.castle;
     if (typeof saved.shells === "number") shells = shells.slice(0, saved.shells);

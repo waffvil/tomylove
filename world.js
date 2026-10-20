@@ -3144,7 +3144,12 @@ function renderCard() {
   const loves = Object.entries(m.likes).filter(([id]) => ACT_NAME[id]).sort((a, b) => b[1] - a[1]).slice(0, 2).map(([id]) => ACT_NAME[id].replace(/^my /, "her "));
   const esc = (t) => String(t).replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c]);
   const meh = Object.entries(m.likes).filter(([id, v]) => ACT_NAME[id] && v < -0.2).sort((a, b) => a[1] - b[1]).slice(0, 1).map(([id]) => ACT_NAME[id].replace(/^my /, "her "));
-  $("#talkIn").placeholder = `say something to ${k.name}…`;
+  $("#talkIn").placeholder = k.teach ? `what does it mean? say it another way…` : `say something to ${k.name}…`;
+  const tk = k.id + "|" + (k.teach || ""), tEl = $("#teach");
+  if (tEl.dataset.key !== tk) {
+    tEl.dataset.key = tk; tEl.hidden = !k.teach;
+    tEl.innerHTML = k.teach ? `<p>teach her: “${esc(clip(k.teach, 24))}” means…</p>` + TEACH_CHIPS.map((it) => `<button type="button" data-mean="${it}">${CHIP_FACE[it]} ${esc(MEANS[it])}</button>`).join("") + `<button type="button" data-mean="">✕ never mind</button>` : "";
+  }
   $("#talkLog").innerHTML = (k.talkLog || []).slice(-2).map((l) => `<p><b>${esc(l.who === "you" ? "you" : l.who)}:</b> ${esc(l.text)}</p>`).join("");
   $("#cardMind").innerHTML = [
     `<p class="title">${esc(PERSONA[k.id].title)} · feeling ${MOOD_WORD[moodOf(k)]}</p>`,
@@ -3406,49 +3411,123 @@ const SAYS = {
   eaten: /\b(an com chua|an chua|an gi chua|have you eaten|did you eat|hungry\?)/,
   how: /\b(how are (you|u)|how r (you|u)|hru|you okay|u ok|(are )?you good|feel(ing)?|co sao khong|khoe khong)\b/,
 };
+// what you meant, worked out without doing anything yet
+function intentOf(t, k) {
+  if (SAYS.kiss.test(t)) return "kiss";
+  if (SAYS.hug.test(t)) return "hug";
+  if (SAYS.miss.test(t)) return "miss";
+  if (SAYS.night.test(t)) return "night";
+  if (SAYS.bye.test(t)) return "bye";
+  if (SAYS.morning.test(t)) return "morning";
+  if (SAYS.eaten.test(t)) return "eaten";
+  if (SAYS.love.test(t)) return "love";
+  if (SAYS.praise.test(t)) return "praise";
+  if (SAYS.sorry.test(t)) return "sorry";
+  if (SAYS.how.test(t)) return "how";
+  if (/what.*(doing|up to)|wyd|lam gi/.test(t)) return "doing";
+  if (/dream|want to do|wish for/.test(t)) return "dream";
+  if (/remember|what happened|your day|today/.test(t)) return "remember";
+  if (/\b(come|here|over here|lai day|qua day|come here)\b/.test(t)) return "come";
+  if (/\b(dance|party)\b/.test(t)) return "party";
+  const other = KIDS.find((o) => o !== k && t.includes(o.name));
+  if (other && /play|with|choi/.test(t)) return "with:" + other.id;
+  if (/\b(lets? play|play with me|choi (di|voi)|wanna play)\b/.test(t)) return "play";
+  if (SAYS.hi.test(t)) return "hi";
+  const hit = ASK_ACTS.find(([re]) => re.test(t));
+  if (hit) return "act:" + (typeof hit[1] === "function" ? hit[1](k) : hit[1]);
+  return null;
+}
+const MEANS = { love: "i love you", kiss: "kisses", hug: "a hug", hi: "hello", bye: "bye bye", night: "goodnight", miss: "i miss you", praise: "good girl", eaten: "have you eaten?",
+  how: "how are you?", sorry: "sorry", morning: "good morning", play: "let's play", doing: "what are you doing?", come: "come here", party: "dance party", dream: "what's your dream?", remember: "what did you do today?" };
+const meaning = (it) => MEANS[it] || (it.startsWith("act:") ? ACT_INFO[it.slice(4)]?.say[0] || it.slice(4) : it.startsWith("with:") ? `play with ${KIDS.find((o) => o.id === it.slice(5))?.name}` : it);
+const TEACH_CHIPS = ["love", "kiss", "hug", "hi", "bye", "night", "miss", "praise", "eaten", "how", "sorry", "play"];
+const CHIP_FACE = { love: "❤️", kiss: "😘", hug: "🤗", hi: "👋", bye: "👋", night: "🌙", miss: "🥺", praise: "🌟", eaten: "🍚", how: "💭", sorry: "🙏", play: "🎈" };
+
+// words you've taught them (all three learn them, and they keep them)
+let WORDS = {};
+try { WORDS = JSON.parse(store.get("words") || "{}") || {}; } catch {}
+function learnedIntent(t) {
+  const key = Object.keys(WORDS).sort((a, b) => b.length - a.length).find((w) => t === w || ` ${t} `.includes(` ${w} `));
+  return key ? WORDS[key] : null;
+}
+function teach(k, phrase, intent) {
+  phrase = norm(phrase || "").slice(0, 40);
+  if (!phrase || !intent) return;
+  WORDS[phrase] = intent; store.set("words", JSON.stringify(WORDS));
+  k.teach = null;
+  hearts(k, 6); k.hop = 1; feel(k, null, { proud: 0.3, happy: 0.2 });
+  KIDS.forEach((o) => remember(o, o === k ? `mama taught me “${phrase}” means ${meaning(intent)}` : `${k.name} told me “${phrase}” means ${meaning(intent)}`));
+  const line = k.id === "rose" ? `ohh! “${phrase}” means ${meaning(intent)} ♡ thank you for teaching me!` : k.id === "teddy" ? `“${phrase}”… means ${meaning(intent)}… teddy remembers ♡` : `OHHH “${phrase}” = ${meaning(intent)}!! i'll tell my sisters!! 💨`;
+  say(k, line, 2600); logTalk(k, k.name, line);
+  later(() => respond(k, intent), 2700);
+}
+
 function hear(k, text) {
-  const t = norm(text), P = PERSONA[k.id];
-  const reply = (r, ms = 2800) => { say(k, r, ms); logTalk(k, k.name, r); };
+  const t = norm(text);
   logTalk(k, "you", text);
   up(k, "love", 6);
-  if (k.asleep) { reply(pick(["zzz… mama…", "*snore* ♡", "mmm… love you…"])); return; }
-  const other = KIDS.find((o) => o !== k && t.includes(o.name));
-  if (SAYS.kiss.test(t)) {
-    feel(k, null, { happy: 0.35, lonely: -0.5 }); up(k, "love", 25); hearts(k, 12); k.hop = 1; remember(k, "mama gave me kissies 😘"); achieve(k, "pat");
-    particle("heart", k.x, k.y - 34, "#ff7fa8", 6, 10, -24, k.area);
-    return reply(k.id === "rose" ? pick(["*muah* thank you mama ♡ 😘", "kissies back! muah muah ♡", "*blushes* i love kissies ♡"]) : k.id === "teddy" ? pick(["*blushes*… muah ♡", "*hides face* 🙈 …hehe muah", "teddy kiss mama too… muah ♡"]) : pick(["MUAH MUAH MUAH 😘💨", "kissies attack!! 😘😘😘", "*smooch* hehe gotcha!"]));
+  if (k.asleep) { const r = pick(["zzz… mama…", "*snore* ♡", "mmm… love you…"]); say(k, r, 2600); logTalk(k, k.name, r); return; }
+  // "forget bubu", or teaching outright: "bubu means i love you"
+  const f = t.match(/^forget (.+)$/);
+  if (f && WORDS[f[1]]) { delete WORDS[f[1]]; store.set("words", JSON.stringify(WORDS)); const r = `okay, i forgot “${f[1]}” ♡`; say(k, r, 2200); logTalk(k, k.name, r); return; }
+  const m = t.match(/^(.+?) (means|= ?|is like|nghia la) (.+)$/);
+  if (m) { const it = learnedIntent(m[3]) || intentOf(m[3], k); if (it) return teach(k, m[1], it); }
+  const intent = learnedIntent(t) || intentOf(t, k);
+  if (intent) {
+    // she asked what something meant a moment ago, and you just said it another way
+    if (k.teach && Date.now() - k.teachT < 120e3) return teach(k, k.teach, intent);
+    k.teach = null;
+    return respond(k, intent, t);
   }
-  if (SAYS.hug.test(t)) {
-    feel(k, null, { happy: 0.3, lonely: -0.6 }); up(k, "love", 25); hearts(k, 10); k.hop = 1; remember(k, "mama gave me a big hug 🤗");
-    return reply(k.id === "rose" ? "*hugs you tight* thank you mama ♡" : k.id === "teddy" ? pick(["*squeezes* don't let go mama 🥺♡", "ôm ôm ♡ teddy loves hugs"]) : "BIG BEAR HUG!! 🤗💨");
+  // she doesn't understand: she asks, and you can teach her
+  k.teach = t; k.teachT = Date.now();
+  const w = clip(text, 24);
+  const r = k.id === "rose" ? `what does “${w}” mean, mama? 🤔` : k.id === "teddy" ? `*tilts head*… “${w}”? 🥺` : `“${w}”?? what's that papa? 🤔`;
+  say(k, r, 3200); logTalk(k, k.name, r);
+}
+function respond(k, intent) {
+  const reply = (r, ms = 2800) => { say(k, r, ms); logTalk(k, k.name, r); };
+  const love = (v, mem) => { feel(k, null, { happy: 0.3, lonely: -0.5 }); up(k, "love", v); hearts(k, 10); k.hop = 1; if (mem) remember(k, mem); };
+  switch (intent) {
+    case "kiss":
+      love(25, "mama gave me kissies 😘"); achieve(k, "pat"); particle("heart", k.x, k.y - 34, "#ff7fa8", 6, 10, -24, k.area);
+      return reply(k.id === "rose" ? pick(["*muah* thank you mama ♡ 😘", "kissies back! muah muah ♡", "*blushes* i love kissies ♡"]) : k.id === "teddy" ? pick(["*blushes*… muah ♡", "*hides face* 🙈 …hehe muah", "teddy kiss mama too… muah ♡"]) : pick(["MUAH MUAH MUAH 😘💨", "kissies attack!! 😘😘😘", "*smooch* hehe gotcha!"]));
+    case "hug":
+      love(25, "mama gave me a big hug 🤗");
+      return reply(k.id === "rose" ? "*hugs you tight* thank you mama ♡" : k.id === "teddy" ? pick(["*squeezes* don't let go mama 🥺♡", "ôm ôm ♡ teddy loves hugs"]) : "BIG BEAR HUG!! 🤗💨");
+    case "miss": love(20); return reply(k.id === "teddy" ? "teddy missed you sooo much… con nhớ mẹ nhiều lắm 🥺♡" : k.id === "rose" ? "i missed you too mama, thank you for coming back ♡" : "I MISSED YOU MORE!! 💨💕");
+    case "night":
+      if (bedtimeFor(k) || hourNow() >= 20) { k.upLate = 0; interrupt(k, "sleep", { quick: true }); return reply(pick(GOODNIGHT)); }
+      return reply(k.id === "blossom" ? "but it's not night time yet hehe 🌞" : "night night? but the sun is still up… ☀️");
+    case "bye": hearts(k, 4); return reply(k.id === "teddy" ? "bye bye mama… come back soon? 🥺👋" : k.id === "rose" ? "bye bye mama, thank you for visiting ♡ 👋" : "byeee!! come back soon!! 👋💨");
+    case "morning": hearts(k, 4); return reply(pick(MORNING));
+    case "eaten": return reply(k.needs.hunger > 70 ? (k.id === "rose" ? "yes mama, i ate already, thank you ♡" : k.id === "teddy" ? "teddy ate… *pats tummy* ♡" : "YES i ate SO much!!") : "not yet… i'm a bit hungry 🥺");
+    case "love": love(25, "mama said she loves me ♡"); achieve(k, "pat"); return reply(pick(LOVE_BACK[k.id]));
+    case "praise": up(k, "love", 15); hearts(k, 6); k.hop = 1; remember(k, "mama said i'm a good girl"); return reply(k.id === "rose" ? "thank you mama, that makes me so happy ♡" : k.id === "teddy" ? "*blushes* …hehe ♡" : "i KNOW hehe 😎💕");
+    case "sorry": return reply(k.id === "teddy" ? "it's okay mama… *hug* ♡" : "it's okay! i still love you ♡");
+    case "how": { const n = k.needs; return reply(n.hunger < 35 ? "i'm a little bit hungry…" : n.energy < 30 ? "*yawn* a bit sleepy…" : n.love < 40 ? "i missed you mama…" : n.clean < 30 ? "i'm all grubby hehe" : k.id === "rose" ? "i'm wonderful, thank you for asking ♡" : k.id === "teddy" ? "teddy is happy now mama's here ♡" : "SUPER GOOD!! 💨"); }
+    case "doing": return reply(`i'm ${k.label.replace(/\bher\b/g, "my")}!`);
+    case "dream": return reply(k.mind.goal ? `today i want to ${k.mind.goal.text}!` : "i already did my dream today ✨");
+    case "remember": return reply(k.mind.memories[0] ? `${k.mind.memories[0].text}!` : "nothing yet… stay and play with me?");
+    case "come": { const [x, y] = tileOf(...viewCenter()); tapWorld({ x: x * T + 8, y: y * T + 10 }); return; }
+    case "party": danceParty(viewCenter()); return reply(pick(SAY_OK[k.id]));
+    case "hi": hearts(k, 4); return reply(k.id === "rose" ? "hello mama! thank you for visiting ♡" : k.id === "teddy" ? "*waves shyly* …hi mama ♡" : "HI PAPA!! 👋💨");
+    case "play": {
+      const fav = Object.entries(k.mind.likes).filter(([id]) => ACT_INFO[id] && !ACT_INFO[id].with && ACTS[id] && ACTS[id].w(k) > 0).sort((a, b) => b[1] - a[1])[0];
+      if (!fav) return reply("hmm… what should we play? 🤔");
+      interrupt(k, fav[0]);
+      return reply(`yay! let's ${ACT_INFO[fav[0]].say[0]}! 🎈`);
+    }
   }
-  if (SAYS.miss.test(t)) { feel(k, null, { happy: 0.3, lonely: -0.6 }); up(k, "love", 20); hearts(k, 8); return reply(k.id === "teddy" ? "teddy missed you sooo much… con nhớ mẹ nhiều lắm 🥺♡" : k.id === "rose" ? "i missed you too mama, thank you for coming back ♡" : "I MISSED YOU MORE!! 💨💕"); }
-  if (SAYS.night.test(t)) {
-    if (bedtimeFor(k) || hourNow() >= 20) { k.upLate = 0; interrupt(k, "sleep", { quick: true }); return reply(pick(GOODNIGHT)); }
-    return reply(k.id === "blossom" ? "but it's not night time yet hehe 🌞" : "night night? but the sun is still up… ☀️");
-  }
-  if (SAYS.bye.test(t)) { hearts(k, 4); return reply(k.id === "teddy" ? "bye bye mama… come back soon? 🥺👋" : k.id === "rose" ? "bye bye mama, thank you for visiting ♡ 👋" : "byeee!! come back soon!! 👋💨"); }
-  if (SAYS.morning.test(t)) { hearts(k, 4); return reply(pick(MORNING)); }
-  if (SAYS.eaten.test(t)) return reply(k.needs.hunger > 70 ? (k.id === "rose" ? "yes mama, i ate already, thank you ♡" : k.id === "teddy" ? "teddy ate… *pats tummy* ♡" : "YES i ate SO much!!") : "not yet… i'm a bit hungry 🥺");
-  if (SAYS.love.test(t)) { feel(k, null, { happy: 0.3, lonely: -0.5 }); up(k, "love", 25); hearts(k, 10); k.hop = 1; remember(k, "mama said she loves me ♡"); achieve(k, "pat"); return reply(pick(LOVE_BACK[k.id])); }
-  if (SAYS.praise.test(t)) { up(k, "love", 15); hearts(k, 6); k.hop = 1; remember(k, "mama said i'm a good girl"); return reply(k.id === "rose" ? "thank you mama, that makes me so happy ♡" : k.id === "teddy" ? "*blushes* …hehe ♡" : "i KNOW hehe 😎💕"); }
-  if (SAYS.sorry.test(t)) return reply(k.id === "teddy" ? "it's okay mama… *hug* ♡" : "it's okay! i still love you ♡");
-  if (SAYS.how.test(t)) { const n = k.needs; return reply(n.hunger < 35 ? "i'm a little bit hungry…" : n.energy < 30 ? "*yawn* a bit sleepy…" : n.love < 40 ? "i missed you mama…" : n.clean < 30 ? "i'm all grubby hehe" : k.id === "rose" ? "i'm wonderful, thank you for asking ♡" : k.id === "teddy" ? "teddy is happy now mama's here ♡" : "SUPER GOOD!! 💨"); }
-  if (/what.*(doing|up to)/i.test(t)) return reply(`i'm ${k.label.replace(/\bher\b/g, "my")}!`);
-  if (/dream|want to do|wish for/i.test(t)) return reply(k.mind.goal ? `today i want to ${k.mind.goal.text}!` : "i already did my dream today ✨");
-  if (/remember|what happened|your day|today/i.test(t)) return reply(k.mind.memories[0] ? `${k.mind.memories[0].text}!` : "nothing yet… stay and play with me?");
-  if (/\b(come|here|over here|lai day|qua day|come here)\b/.test(t)) { const [x, y] = tileOf(...viewCenter()); tapWorld({ x: x * T + 8, y: y * T + 10 }); return; }
-  if (/(dance|party)/i.test(t)) { danceParty(viewCenter()); return reply(pick(SAY_OK[k.id])); }
-  if (other && /play|with/i.test(t)) {
-    if (other.area !== k.area || other.asleep) return reply(`${other.name} is ${other.asleep ? "sleeping" : "somewhere else"} right now…`);
+  if (intent.startsWith("with:")) {
+    const other = KIDS.find((o) => o.id === intent.slice(5));
+    if (!other || other.area !== k.area || other.asleep) return reply(`${other?.name || "she"} is ${other?.asleep ? "sleeping" : "somewhere else"} right now…`);
     endStep(other); snapOff(other); other.act = "idle"; other.steps = []; // free her up to be asked
     interrupt(k, other.id === "teddy" && k.id === "rose" ? "chat" : pick(["chat", "tag", "seesaw"].filter((a) => ACTS[a].w(k) > 0)) || "chat");
     return reply(`okay! ${other.name}, come play! 💕`);
   }
-  if (SAYS.hi.test(t)) { hearts(k, 4); return reply(k.id === "rose" ? "hello mama! thank you for visiting ♡" : k.id === "teddy" ? "*waves shyly* …hi mama ♡" : "HI PAPA!! 👋💨"); }
-  const hit = ASK_ACTS.find(([re]) => re.test(t));
-  if (hit) {
-    const act = typeof hit[1] === "function" ? hit[1](k) : hit[1];
+  if (intent.startsWith("act:")) {
+    const act = intent.slice(4);
     if (!ACTS[act] || ACTS[act].w(k) <= 0) return reply(isNight() ? "but it's night time, mama… 🌙" : raining() && ACTS[act]?.area === ISL ? "but it's raining… 🌧️" : "i can't right now… maybe later? ♡");
     k.mind.likes[act] = (k.mind.likes[act] ?? 0) + 0.05; // she likes doing what mama suggests
     // free will: vimi might finish what she's doing first
@@ -3456,8 +3535,6 @@ function hear(k, text) {
     interrupt(k, act);
     return reply(`${pick(SAY_OK[k.id])} ${act === "myplot" ? "to my garden 🌱" : ""}`.trim());
   }
-  // something she doesn't understand: she answers sweetly anyway
-  reply(pick(k.id === "rose" ? ["hehe i don't know that one, but i love you mama ♡", "could you say it again please? ♡"] : k.id === "teddy" ? ["*tilts head*… ♡", "teddy doesn't know… hug?"] : ["huh?? hehe", "what's that papa? 🤔", "let's play instead!!"]));
 }
 function logTalk(k, who, text) { (k.talkLog = k.talkLog || []).push({ who, text: clip(text, 120) }); k.talkLog = k.talkLog.slice(-4); if (k === selected) renderCard(); }
 
@@ -3560,6 +3637,13 @@ schedule();
 // buttons for talking, the diary and the pop-out
 $("#talk").addEventListener("submit", (e) => { e.preventDefault(); const i = $("#talkIn"), t = i.value.trim(); if (!t || !selected) return; audio(); sfx.pop(); i.value = ""; hear(selected, t); });
 $("#talk").addEventListener("pointerdown", (e) => e.stopPropagation());
+$("#teach").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-mean]"), k = selected;
+  if (!b || !k || !k.teach) return;
+  audio(); sfx.pop();
+  if (b.dataset.mean) teach(k, k.teach, b.dataset.mean);
+  else { k.teach = null; renderCard(); }
+});
 $("#diaryBtn").addEventListener("click", () => { audio(); sfx.pop(); openDiary(false); });
 $("#diaryX").addEventListener("click", () => { audio(); sfx.pop(); $("#diary").hidden = true; });
 $("#popBtn").addEventListener("click", () => { audio(); sfx.pop(); popOut(); });

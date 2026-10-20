@@ -1460,6 +1460,24 @@ saveSleep();
 checkNight();
 requestAnimationFrame(loop);
 
+// bedtime is shared with the island: whenever you come back to this page (or the island
+// changes it in another tab), the beds catch up with who's really asleep
+function syncSleep() {
+  let log = {};
+  try { log = JSON.parse(store.get("sleep") || "{}") || {}; } catch { return; }
+  KIDS.forEach((k) => {
+    const ts = log[k.id], asleep = k.state === "asleep";
+    if (ts && Date.now() - ts < SLEEP_MS && !asleep) { tuckIn(k, true); sleepLog[k.id] = ts; }
+    else if ((!ts || Date.now() - ts >= SLEEP_MS) && asleep) wakeUp(k);
+  });
+  sleepLog = Object.fromEntries(KIDS.filter((k) => k.state === "asleep").map((k) => [k.id, log[k.id] || sleepLog[k.id] || Date.now()]));
+  saveSleep();
+  checkNight();
+}
+addEventListener("pageshow", (e) => { if (e.persisted) syncSleep(); });
+addEventListener("storage", (e) => { if (e.key === "tomylove.sleep") syncSleep(); });
+document.addEventListener("visibilitychange", () => { if (!document.hidden) syncSleep(); });
+
 // ---------- visit counter + clock ----------
 // shared between both of us: lives in the M+V supabase, bumped once per browser session
 (async () => {

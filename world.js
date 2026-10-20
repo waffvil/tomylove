@@ -1045,6 +1045,7 @@ function score(k, id, partner = null, asked = false) {
   const out = ACTS[id]?.area === ISL;
   if (out && raining() && id !== "puddles") parts.weather = -1.4 * (1 - tr.brave * 0.4);
   if (hourNow() >= 20 && !bedtimeFor(k)) parts.weather = (parts.weather || 0) + (out ? -0.8 : 0.4);
+  if (isNight() && out) parts.weather = (parts.weather || 0) - 2.5 * (1 - PERSONA[k.id].traits.brave * 0.3); // it's dark out there
   // exciting things happening right now
   let w = 0;
   if (id === "ball" || id === "bubbles") w += 2.5 * (0.5 + tr.playful);
@@ -1883,7 +1884,7 @@ const ACTS = {
         end() { k.needs.clean = 100; say(k, pick(["all clean! ✨", "i smell like strawberries", "squeaky clean!"]), 1500); } }, "running a bubble bath 🛁");
     } },
   bednap: { area: HOM, w: (k) => (day() && k.needs.energy < 30 ? 5 : 0), plan: (k, o) => bedSteps(k, false, o) },
-  sleep: { area: HOM, w: (k) => (bedtimeFor(k) ? 500 : 0), plan: (k, o) => bedSteps(k, true, o) },
+  sleep: { area: HOM, w: (k) => (bedtimeFor(k) && !(k.upLate > world.t) ? 500 : 0), plan: (k, o) => bedSteps(k, true, o) },
   window: { area: HOM, w: (k) => (!taken("window", k) ? 0.25 : 0),
     plan(k) {
       return [{ go: [14, 3], area: HOM, label: "going to the window", claim: "window" },
@@ -3033,6 +3034,7 @@ canvas.addEventListener("pointermove", (e) => {
     const k = drag.k;
     if (k) {
       audio(); sfx.squeak(); select(k);
+      if (k.asleep && bedtimeFor(k)) k.upLate = world.t + 180; // woken by you: she stays up with you a few minutes
       endStep(k); mindFinish(k); k.seatFrom = null; k.hopping = false; k.lift = 0;
       feel(k, "you carried me around!", { excited: 0.2 + 0.2 * PERSONA[k.id].traits.brave, happy: 0.1 * PERSONA[k.id].traits.cuddly });
       k.steps = []; k.path = []; k.held = true; k.act = "held"; k.claims = []; k.label = "being carried by you ♡"; k.pose = "stand";
@@ -3250,17 +3252,18 @@ let hiddenAt = 0;
 document.addEventListener("visibilitychange", () => {
   if (pipWin) return; // still showing in the little window
   if (document.hidden) { hiddenAt = Date.now(); save(); }
-  else if (hiddenAt) { const away = (Date.now() - hiddenAt) / 1000; catchUp(away); hiddenAt = 0; if (away > 1800) openDiary(true); }
+  else if (hiddenAt) { const away = (Date.now() - hiddenAt) / 1000; catchUp(away); hiddenAt = 0; syncSleep(); if (away > 1800) openDiary(true); }
 });
 // bedtime shared with the nursery on the main page (if both are open)
-addEventListener("storage", (e) => {
-  if (e.key !== "tomylove.sleep") return;
-  try { sleepLog = JSON.parse(e.newValue || "{}") || {}; } catch { return; }
+function syncSleep() {
+  try { sleepLog = JSON.parse(store.get("sleep") || "{}") || {}; } catch { return; }
   KIDS.forEach((k) => {
-    if (k.asleep && !sleepLog[k.id] && k.step && k.step.stay === Infinity) k.step.dur = 0;
-    else if (!k.asleep && sleepLog[k.id] && !k.held) interrupt(k, bedtime() ? "sleep" : "bednap");
+    if (k.asleep && !sleepLog[k.id] && k.step && k.pose === "bed") { k.upLate = world.t + 180; k.step.dur = 0; }
+    else if (!k.asleep && sleepLog[k.id] && !k.held) { k.area = HOM; interrupt(k, bedtimeFor(k) ? "sleep" : "bednap", { inBed: true, quiet: true }); }
   });
-});
+}
+addEventListener("storage", (e) => { if (e.key === "tomylove.sleep") syncSleep(); });
+addEventListener("pageshow", (e) => { if (e.persisted) syncSleep(); });
 
 function tickClock() {
   const d = new Date(), h = FIXED_HOUR ?? d.getHours() + d.getMinutes() / 60, hh = Math.floor(h), mm = FIXED_HOUR !== null ? Math.round((h % 1) * 60) : d.getMinutes();

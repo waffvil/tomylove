@@ -1,4 +1,4 @@
-// shared by index.html and house.html: the girls' data, what they say, and their pixel sprites
+// shared by index.html and world.html: the girls' data, what they say, and their pixel sprites
 // drawn in code on a 32×34 grid. edit the lines below to change what they say.
 const KIDS = [
   { id: "rose",    name: "mivi",          draw: drawRoseBunny,    back: drawRoseBunnyBack,    side: drawRoseBunnySide,    says: ["mivi got you a rose mama ♡", "boop!", "smell my rose bố", "i love vimi"] },
@@ -181,3 +181,67 @@ function sprite(kid, frame, sleep = false, view = "front") {
   d.g.forEach((col, i) => { if (col) { ctx.fillStyle = PAL[col]; ctx.fillRect(i % GW, Math.floor(i / GW), 1, 1); } });
   return c;
 }
+
+// ---------- who they are (the island reads this to give each girl her own mind) ----------
+// traits go from 0 (not at all) to 1 (very):
+//   curious · playful · cuddly · calm · brave · sociable · generous · creative · mischief · girly · foodie · shy
+// loves:  things she starts out liking. she learns the rest herself as she plays, and her tastes
+//         keep changing with how things actually go for her. any activity name works, e.g.
+//   explore flowers butterfly pond fishing swing slide seesaw sandbox beach shells sunbathe picnic shop icecream
+//   apples garden myplot bench nap cloudgaze kite fountain kitty puddles chat tag hide stroll teaparty dressup
+//   eat cook tv piano read draw toys bath window tagalong missmama
+// meh:    things she starts out not caring for
+// bestie: the sister she starts closest to (feelings change as they play, squabble and make up)
+// body:   how fast she gets hungry / tired / bored / lonely / grubby (1 = normal, 1.3 = faster)
+// yes / no: what she says when a sister asks her to play
+// the rest is how she talks to you, what she grows, how fast she walks and when she goes to bed
+const PERSONALITY = {
+  rose: {
+    about: "mivi: an angel. very polite, a sweet baby girl, a typical girlie girl and a sweet princess. our sweetheart. same age as vimi",
+    title: "our polite little princess 👑",
+    traits: { curious: 0.5, playful: 0.6, cuddly: 0.7, calm: 0.7, brave: 0.4, sociable: 0.75, generous: 0.95, creative: 0.7, mischief: 0.1, girly: 1, foodie: 0.4, shy: 0.2 },
+    loves: ["flowers", "teaparty", "dressup", "piano", "fountain", "myplot"], meh: ["puddles", "fishing"],
+    bestie: "blossom",
+    body: { hunger: 1, energy: 1, fun: 1, love: 1, clean: 0.9 },
+    speed: 34, bedtime: 21.75,
+    crops: { rose: 1, tulip: 0.9, lavender: 0.75, daisy: 0.6, strawberry: 0.6 },
+    yes: ["yes please! ♡", "i'd love to ♡", "of course!"],
+    no: ["not right now, sorry ♡", "maybe later please?", "could we play after this?"],
+    tap: ["thank you mama ♡", "you're so kind papa ♡", "*curtsies* 👑", "may i have a hug please?", "i love you mama, thank you for visiting ♡", "papa you're the best, thank you!"],
+    called: ["coming mama! thank you for waiting ♡", "yes mama, coming ♡", "of course papa ♡"],
+    yum: ["thank you for the food ♡", "it's delicious, thank you!", "so yummy, thank you ♡"],
+    plant: (c) => [`i'll plant ${c.name} ${c.emoji}, they're so pretty`, `${c.name} for a princess garden 👑`, `mama will love ${c.name} ${c.emoji}`],
+  },
+  blossom: {
+    about: "vimi: a bit outgoing, always the first to charge into something. same age as mivi",
+    title: "first to charge in 💨",
+    traits: { curious: 0.95, playful: 1, cuddly: 0.4, calm: 0.2, brave: 1, sociable: 0.85, generous: 0.5, creative: 0.5, mischief: 0.7, girly: 0.3, foodie: 0.5, shy: 0 },
+    loves: ["swing", "slide", "tag", "kite", "puddles", "explore", "hide", "ball"], meh: ["read", "bench"],
+    bestie: "rose",
+    body: { hunger: 1, energy: 1.1, fun: 1.3, love: 0.9, clean: 1.2 },
+    speed: 39, bedtime: 21.75,
+    crops: { sunflower: 1, watermelon: 0.9, pumpkin: 0.8, tomato: 0.6, carrot: 0.5 },
+    yes: ["YES let's go!! 💨", "okay okay okay!", "race you there!"],
+    no: ["nah, i'm busy!", "laterrr!", "after this one!"],
+    tap: ["hehe again!", "race me papa!", "watch this!!", "i'm the fastest!", "let's go let's go!", "papa throw me in the air!"],
+    called: ["zoooom! 💨", "coming!!", "race you mama!"],
+    yum: ["NOM NOM", "yum yum yum!", "more please!!"],
+    plant: (c) => [`${c.name}! the BIGGEST ones ever ${c.emoji}`, `let's try ${c.name} ${c.emoji}!`, `i bet i can grow ${c.name} taller than papa`],
+  },
+  teddy: {
+    about: "teddy: the youngest. very shy, a little baby. she loves mama and papa nhiều lắm",
+    title: "our shy little baby 🧸",
+    traits: { curious: 0.3, playful: 0.5, cuddly: 1, calm: 0.7, brave: 0.1, sociable: 0.5, generous: 0.6, creative: 0.4, mischief: 0.2, girly: 0.4, foodie: 0.8, shy: 1 },
+    loves: ["tagalong", "missmama", "toys", "picnic", "icecream", "nap", "kitty", "myplot"], meh: ["explore", "tag", "fishing"],
+    bestie: "rose",
+    body: { hunger: 1.2, energy: 1.2, fun: 1, love: 1.8, clean: 1 },
+    speed: 28, bedtime: 21.25,
+    crops: { strawberry: 1, blueberry: 0.85, carrot: 0.7, daisy: 0.6 },
+    yes: ["…okay ♡", "teddy too? yay ♡", "hold my hand?"],
+    no: ["*shakes head*", "teddy is shy…", "maybe later…"],
+    tap: ["*hides face* 🙈", "…hehe ♡", "con thương mẹ nhiều lắm ♡", "papa… up please?", "teddy loves mama and papa nhiều lắm", "mama don't go…", "*hugs your finger*"],
+    called: ["mama!! 🥺", "teddy coming…", "wait for teddy!"],
+    yum: ["*nom*… yummy", "teddy likes it ♡", "mmm…"],
+    plant: (c) => [`${c.name} ${c.emoji}… for mama and papa`, `teddy wants ${c.name}…`, `little ${c.name} ${c.emoji} hehe`],
+  },
+};

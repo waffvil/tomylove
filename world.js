@@ -3378,30 +3378,66 @@ const LOVE_BACK = {
   teddy: ["con thương mẹ nhiều lắm ♡", "teddy loves mama and papa nhiều lắm…", "*hugs you tight* 🥺♡"],
 };
 const ASK_ACTS = [
-  [/ice ?cream|\bkem\b/i, "icecream"], [/flower|\bhoa\b|bouquet/i, "flowers"], [/garden|plant|grow|water/i, "myplot"], [/swing/i, "swing"], [/slide/i, "slide"],
+  [/ice ?cream|\bkem\b|🍦/i, "icecream"], [/flower|\bhoa\b|bouquet|🌷|🌸/i, "flowers"], [/garden|plant|grow|water/i, "myplot"], [/swing/i, "swing"], [/slide/i, "slide"],
   [/see ?saw/i, "seesaw"], [/kite/i, "kite"], [/fish/i, "fishing"], [/shell/i, "shells"], [/beach|sea|swim|paddle/i, "beach"], [/sand ?castle|sandbox/i, "sandbox"],
-  [/\btv\b|cartoon|telly/i, "tv"], [/piano|music|song|sing/i, "piano"], [/bath|wash|clean|shower|tắm/i, "bath"], [/read|book|story/i, "read"], [/draw|paint|picture|colou?r/i, "draw"],
-  [/cook|pancake|bake/i, "cook"], [/tea ?party|\btea\b/i, "teaparty"], [/hide|seek/i, "hide"], [/\btag\b|chase/i, "tag"], [/kitty|\bcat\b|\bmèo\b/i, "kitty"], [/duck|pond/i, "pond"],
+  [/\btv\b|cartoon|telly/i, "tv"], [/piano|music|song|sing/i, "piano"], [/bath|wash|clean|shower|\btam\b/i, "bath"], [/read|book|story/i, "read"], [/draw|paint|picture|colou?r/i, "draw"],
+  [/cook|pancake|bake/i, "cook"], [/tea ?party|\btea\b/i, "teaparty"], [/hide|seek/i, "hide"], [/\btag\b|chase/i, "tag"], [/kitty|\bcat\b|\bmeo\b|🐱/i, "kitty"], [/duck|pond/i, "pond"],
   [/dress|outfit|tiara|pretty/i, "dressup"], [/wish|fountain/i, "fountain"], [/shop/i, "shop"], [/picnic/i, "picnic"], [/apple/i, "apples"], [/puddle/i, "puddles"],
   [/cloud/i, "cloudgaze"], [/toy|block|doll/i, "toys"], [/window/i, "window"], [/mail|letter/i, "mail"], [/explore|adventure|walk/i, "explore"],
-  [/hungry|\beat\b|food|\băn\b|snack|dinner|lunch|breakfast/i, (k) => (k.area === HOM ? "eat" : pick(["picnic", "shop", "apples"]))],
-  [/sleep|\bbed\b|\bnap\b|\bngủ\b|goodnight|good night/i, (k) => (bedtimeFor(k) ? "sleep" : "bednap")],
+  [/hungry|\beat\b|food|an com|an di|an gi|snack|dinner|lunch|breakfast|🍓|🍰/i, (k) => (k.area === HOM ? "eat" : pick(["picnic", "shop", "apples"]))],
+  [/sleep|\bbed\b|\bnap\b|di ngu|ngu trua/i, (k) => (bedtimeFor(k) ? "sleep" : "bednap")],
 ];
+// how mama & papa actually talk: no accents needed (yeu = yêu), stretched words (hiiii, muahhh), slang and emoji
+function norm(text) {
+  return text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d")
+    .replace(/([a-z])\1{2,}/g, "$1$1").replace(/\s+/g, " ").trim();
+}
+const SAYS = {
+  love: /\b(i+ ?l+o+v+e+ ?(you+|u+)|l+o+v+e+|l+u+v+|w+u+v+|l+u+b+|i+u+|y+e+u+|thuong|ily(sm)?|143|ilu)\b|❤|♥|💕|💗|💖|🥰|😍|<3/,
+  kiss: /\b(k+i+s+(s+e*s*)?|kiss(ies|y|es)|m+u+a+h*|m+w+a+h+|smooch|xoxo|thom|hun (ma|cai)|chut chut)\b|😘|💋|😚|😙/,
+  hug: /\b(h+u+g+s*|cuddles?|snuggles?|om (con|ma|em|nao)|om)\b|🤗|🫂/,
+  miss: /\b(miss(ed)? (you+|u+|ya)|nho (con|em|qua|lam)?)\b/,
+  hi: /^(h+a+i+|h+i+|h+e+y+|h+e+l+o+|h+e+l+l+o+|h+e+l+u+|hiya|yo+|sup|wassup|chao|xin chao|ola|hallo)\b|\b(h+a+i+|h+i+|h+e+y+|h+e+l+l+o+|chao) (mivi|vimi|teddy|baby|con|em|cutie|bub)/,
+  morning: /\b(good ?morning|g+m+|morning|chao buoi sang|buoi sang)\b|☀/,
+  night: /\b(good ?night|g+n+|nini|night night|nighty|ngu ngon|di ngu|ngu di|sweet dreams)\b|🌙|😴/,
+  bye: /\b(bye+|b+y+e+ b+y+e+|bai|tam biet|see (you|u|ya)|cya|ttyl|gotta go|di day)\b|👋/,
+  praise: /\b(good girl|well done|proud|clever|smart|gioi|ngoan|amazing|cute+|cutie|adorable|de thuong|xinh|beautiful|pretty|precious|bestest|the best)\b/,
+  sorry: /\b(sorry|soz|xin loi|my bad)\b/,
+  eaten: /\b(an com chua|an chua|an gi chua|have you eaten|did you eat|hungry\?)/,
+  how: /\b(how are (you|u)|how r (you|u)|hru|you okay|u ok|(are )?you good|feel(ing)?|co sao khong|khoe khong)\b/,
+};
 function hear(k, text) {
-  const t = text.toLowerCase(), P = PERSONA[k.id];
+  const t = norm(text), P = PERSONA[k.id];
   const reply = (r, ms = 2800) => { say(k, r, ms); logTalk(k, k.name, r); };
   logTalk(k, "you", text);
   up(k, "love", 6);
   if (k.asleep) { reply(pick(["zzz… mama…", "*snore* ♡", "mmm… love you…"])); return; }
   const other = KIDS.find((o) => o !== k && t.includes(o.name));
-  if (/\b(love|yêu|thương|luv|ily)\b/i.test(t)) { feel(k, null, { happy: 0.3, lonely: -0.5 }); up(k, "love", 25); hearts(k, 10); k.hop = 1; remember(k, "mama said she loves me ♡"); achieve(k, "pat"); return reply(pick(LOVE_BACK[k.id])); }
-  if (/good girl|well done|proud|clever|smart|giỏi|ngoan|amazing|so cute|beautiful|pretty girl/i.test(t)) { up(k, "love", 15); hearts(k, 6); k.hop = 1; remember(k, "mama said i'm a good girl"); return reply(k.id === "rose" ? "thank you mama, that makes me so happy ♡" : k.id === "teddy" ? "*blushes* …hehe ♡" : "i KNOW hehe 😎💕"); }
-  if (/sorry|xin lỗi/i.test(t)) return reply(k.id === "teddy" ? "it's okay mama… *hug* ♡" : "it's okay! i still love you ♡");
-  if (/how are you|how r u|you okay|feel/i.test(t)) { const n = k.needs; return reply(n.hunger < 35 ? "i'm a little bit hungry…" : n.energy < 30 ? "*yawn* a bit sleepy…" : n.love < 40 ? "i missed you mama…" : n.clean < 30 ? "i'm all grubby hehe" : k.id === "rose" ? "i'm wonderful, thank you for asking ♡" : k.id === "teddy" ? "teddy is happy now mama's here ♡" : "SUPER GOOD!! 💨"); }
+  if (SAYS.kiss.test(t)) {
+    feel(k, null, { happy: 0.35, lonely: -0.5 }); up(k, "love", 25); hearts(k, 12); k.hop = 1; remember(k, "mama gave me kissies 😘"); achieve(k, "pat");
+    particle("heart", k.x, k.y - 34, "#ff7fa8", 6, 10, -24, k.area);
+    return reply(k.id === "rose" ? pick(["*muah* thank you mama ♡ 😘", "kissies back! muah muah ♡", "*blushes* i love kissies ♡"]) : k.id === "teddy" ? pick(["*blushes*… muah ♡", "*hides face* 🙈 …hehe muah", "teddy kiss mama too… muah ♡"]) : pick(["MUAH MUAH MUAH 😘💨", "kissies attack!! 😘😘😘", "*smooch* hehe gotcha!"]));
+  }
+  if (SAYS.hug.test(t)) {
+    feel(k, null, { happy: 0.3, lonely: -0.6 }); up(k, "love", 25); hearts(k, 10); k.hop = 1; remember(k, "mama gave me a big hug 🤗");
+    return reply(k.id === "rose" ? "*hugs you tight* thank you mama ♡" : k.id === "teddy" ? pick(["*squeezes* don't let go mama 🥺♡", "ôm ôm ♡ teddy loves hugs"]) : "BIG BEAR HUG!! 🤗💨");
+  }
+  if (SAYS.miss.test(t)) { feel(k, null, { happy: 0.3, lonely: -0.6 }); up(k, "love", 20); hearts(k, 8); return reply(k.id === "teddy" ? "teddy missed you sooo much… con nhớ mẹ nhiều lắm 🥺♡" : k.id === "rose" ? "i missed you too mama, thank you for coming back ♡" : "I MISSED YOU MORE!! 💨💕"); }
+  if (SAYS.night.test(t)) {
+    if (bedtimeFor(k) || hourNow() >= 20) { k.upLate = 0; interrupt(k, "sleep", { quick: true }); return reply(pick(GOODNIGHT)); }
+    return reply(k.id === "blossom" ? "but it's not night time yet hehe 🌞" : "night night? but the sun is still up… ☀️");
+  }
+  if (SAYS.bye.test(t)) { hearts(k, 4); return reply(k.id === "teddy" ? "bye bye mama… come back soon? 🥺👋" : k.id === "rose" ? "bye bye mama, thank you for visiting ♡ 👋" : "byeee!! come back soon!! 👋💨"); }
+  if (SAYS.morning.test(t)) { hearts(k, 4); return reply(pick(MORNING)); }
+  if (SAYS.eaten.test(t)) return reply(k.needs.hunger > 70 ? (k.id === "rose" ? "yes mama, i ate already, thank you ♡" : k.id === "teddy" ? "teddy ate… *pats tummy* ♡" : "YES i ate SO much!!") : "not yet… i'm a bit hungry 🥺");
+  if (SAYS.love.test(t)) { feel(k, null, { happy: 0.3, lonely: -0.5 }); up(k, "love", 25); hearts(k, 10); k.hop = 1; remember(k, "mama said she loves me ♡"); achieve(k, "pat"); return reply(pick(LOVE_BACK[k.id])); }
+  if (SAYS.praise.test(t)) { up(k, "love", 15); hearts(k, 6); k.hop = 1; remember(k, "mama said i'm a good girl"); return reply(k.id === "rose" ? "thank you mama, that makes me so happy ♡" : k.id === "teddy" ? "*blushes* …hehe ♡" : "i KNOW hehe 😎💕"); }
+  if (SAYS.sorry.test(t)) return reply(k.id === "teddy" ? "it's okay mama… *hug* ♡" : "it's okay! i still love you ♡");
+  if (SAYS.how.test(t)) { const n = k.needs; return reply(n.hunger < 35 ? "i'm a little bit hungry…" : n.energy < 30 ? "*yawn* a bit sleepy…" : n.love < 40 ? "i missed you mama…" : n.clean < 30 ? "i'm all grubby hehe" : k.id === "rose" ? "i'm wonderful, thank you for asking ♡" : k.id === "teddy" ? "teddy is happy now mama's here ♡" : "SUPER GOOD!! 💨"); }
   if (/what.*(doing|up to)/i.test(t)) return reply(`i'm ${k.label.replace(/\bher\b/g, "my")}!`);
   if (/dream|want to do|wish for/i.test(t)) return reply(k.mind.goal ? `today i want to ${k.mind.goal.text}!` : "i already did my dream today ✨");
   if (/remember|what happened|your day|today/i.test(t)) return reply(k.mind.memories[0] ? `${k.mind.memories[0].text}!` : "nothing yet… stay and play with me?");
-  if (/\b(come|here|over here|lại đây)\b/i.test(t)) { const [x, y] = tileOf(...viewCenter()); tapWorld({ x: x * T + 8, y: y * T + 10 }); return; }
+  if (/\b(come|here|over here|lai day|qua day|come here)\b/.test(t)) { const [x, y] = tileOf(...viewCenter()); tapWorld({ x: x * T + 8, y: y * T + 10 }); return; }
   if (/(dance|party)/i.test(t)) { danceParty(viewCenter()); return reply(pick(SAY_OK[k.id])); }
   if (other && /play|with/i.test(t)) {
     if (other.area !== k.area || other.asleep) return reply(`${other.name} is ${other.asleep ? "sleeping" : "somewhere else"} right now…`);
@@ -3409,7 +3445,7 @@ function hear(k, text) {
     interrupt(k, other.id === "teddy" && k.id === "rose" ? "chat" : pick(["chat", "tag", "seesaw"].filter((a) => ACTS[a].w(k) > 0)) || "chat");
     return reply(`okay! ${other.name}, come play! 💕`);
   }
-  if (/hi|hello|hey|chào|morning|xin chào/i.test(t)) { hearts(k, 4); return reply(k.id === "rose" ? "hello mama! thank you for visiting ♡" : k.id === "teddy" ? "*waves shyly* …hi mama ♡" : "HI PAPA!! 👋💨"); }
+  if (SAYS.hi.test(t)) { hearts(k, 4); return reply(k.id === "rose" ? "hello mama! thank you for visiting ♡" : k.id === "teddy" ? "*waves shyly* …hi mama ♡" : "HI PAPA!! 👋💨"); }
   const hit = ASK_ACTS.find(([re]) => re.test(t));
   if (hit) {
     const act = typeof hit[1] === "function" ? hit[1](k) : hit[1];

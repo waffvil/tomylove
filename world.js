@@ -928,7 +928,7 @@ const ACT_INFO = {
   ball:      { gain: { fun: 0.9, energy: -0.3 }, traits: { playful: 1, brave: 0.3 }, join: true, say: ["play ball", "playing ball"] },
   bubbles:   { gain: { fun: 0.9 }, traits: { playful: 0.8, mischief: 0.4 }, join: true, say: ["pop bubbles", "popping bubbles"] },
   idle:      { gain: { energy: 0.1 }, traits: { calm: 0.6, creative: 0.4 }, quiet: true, say: ["daydream", "daydreaming"] },
-  tagalong:  { gain: { love: 1 }, traits: { cuddly: 1, shy: 0.8 }, say: ["follow my big sisters", "following her sisters"] },
+  tagalong:  { gain: { love: 1 }, traits: { cuddly: 1, sociable: 0.6, shy: 0.6 }, say: ["go be with my sisters", "with her sisters"] },
   missmama:  { gain: { love: 0.7 }, traits: { cuddly: 1, shy: 0.6 }, quiet: true, say: ["wait for mama at the window", "waiting for mama"] },
   dressup:   { gain: { fun: 0.5, love: 0.1 }, traits: { girly: 1, creative: 0.5 }, say: ["dress up", "dressing up"] },
   eat:       { gain: { hunger: 1.2 }, traits: { foodie: 0.6, calm: 0.3 }, join: true, say: ["eat something yummy", "eating"] },
@@ -972,9 +972,12 @@ function initMind(k) {
 function remember(k, text) { const m = k.mind.memories; if (m[0]?.text === text) return; m.unshift({ t: Date.now(), text }); m.length = Math.min(m.length, 30); }
 function think(k, text, ms = 2300) { k.mind.thought = text; say(k, text, ms, true); }
 const likeOf = (k, id) => k.mind.likes[id] ?? 0;
-const close = (k, o) => k.mind.aff[o.id] ?? (PERSONA[k.id].bestie === o.id ? 0.85 : 0.6);
-// closeness grows slowly once they're already close, and drops a little faster than it grows
-function bondAdd(k, o, v) { const b = close(k, o); k.mind.aff[o.id] = clamp(b + (v > 0 ? v * (1 - b) * 1.5 : v), 0, 1); }
+// the three sisters love each other equally, always: no favourites, no falling out
+const close = () => 0.9;
+function bondAdd() {}
+// and they share their time fairly: she goes to whichever sister she's been with least lately
+const together = (k, o) => k.mind.together?.[o.id] || 0;
+const fairest = (k, list) => list.slice().sort((a, b) => together(k, a) - together(k, b) + rand(-5, 5))[0];
 function bond(a, b, v) { bondAdd(a, b, v); bondAdd(b, a, v); }
 const moodOf = (k) => MOODS.reduce((a, b) => (k.mind.mood[b] > k.mind.mood[a] ? b : a), "happy");
 function feel(k, text, moods = {}) {
@@ -993,7 +996,7 @@ const free = (o) => !busy(o) && INTERRUPTIBLE.includes(o.act) && !o.seatFrom;
 // ---------- weighing an option, for her own reasons ----------
 function partnersFor(k) {
   const g = k.mind.goal;
-  return others(k).filter((o) => o.area === k.area && free(o)).sort((a, b) => (g?.with === b.id) - (g?.with === a.id) || close(k, b) - close(k, a) + (k.id === "rose" && b.id === "teddy" && b.mind.mood.lonely > 0.4 ? 0.5 : 0));
+  return others(k).filter((o) => o.area === k.area && free(o)).sort((a, b) => (g?.with === b.id) - (g?.with === a.id) || together(k, a) - together(k, b));
 }
 function goalActs(k) { const g = k.mind.goal; return g ? g.acts || GOALS[g.id]?.acts || [] : []; }
 function score(k, id, partner = null, asked = false) {
@@ -1029,6 +1032,12 @@ function score(k, id, partner = null, asked = false) {
     const there = others(k).filter((o) => o.act === id && o.area === k.area).sort((a, b) => close(k, b) - close(k, a))[0];
     if (there) { friend = there; parts.friend = close(k, there) * (0.4 + tr.sociable); }
   }
+  // she wants to be wherever her sisters are
+  const spot = PLACE[id], awake = others(k).filter((o) => !o.asleep && !o.hidden);
+  const area = spot ? spot[0] : ACTS[id]?.area || k.area;
+  let tog = awake.filter((o) => o.area === area).length * 0.5 + awake.filter((o) => o.act === id).length * 1.1;
+  if (spot) tog += awake.filter((o) => o.area === area && Math.hypot(o.x - spot[1] * T, o.y - spot[2] * T) < 10 * T).length * 0.9;
+  if (tog) parts.together = tog * (0.6 + tr.sociable * 0.4 + mo.lonely);
   // what she's working towards
   const g = m.goal;
   if (g && goalActs(k).includes(id) && (!g.with || !info.with || !friend || friend.id === g.with)) parts.goal = 1.6;
@@ -1083,11 +1092,11 @@ function bestOf(options) {
 // she asks a sister to play; the sister decides for herself
 function ask(p, k, id) {
   const now = ACT_INFO[p.act] ? score(p, p.act).total + 0.5 : 0.5;
-  const want = score(p, id, k, true).total + close(p, k) * 0.8 + (p.mind.goal?.with === k.id ? 1 : 0) + PERSONA[p.id].traits.generous * 0.3;
+  const want = score(p, id, k, true).total + close(p, k) * 0.8 + 0.4 + (p.mind.goal?.with === k.id ? 1 : 0) + PERSONA[p.id].traits.generous * 0.3;
   if (want + rand(-0.2, 0.2) >= now) {
     later(() => say(p, pick(YES(p)), 1300), 500);
     p.mind.pendingWith = k;
-    p.mind.why = `${ACT_INFO[id].say[0]} with ${k.name} · ${k.name} asked${close(p, k) > 0.75 ? " & she loves her" : ""}`;
+    p.mind.why = `${ACT_INFO[id].say[0]} with ${k.name} · ${k.name} asked & she loves her sisters`;
     return true;
   }
   const no = p.needs.energy < 30 ? "i'm too sleepy…" : p.needs.hunger < 30 ? "i'm hungry…" : pick([...NO(p), `not now, i'm ${ACT_INFO[p.act]?.say[1] || "busy"}`]);
@@ -1152,7 +1161,6 @@ function socialGoal(k) {
     if ((o.mind.mood.lonely > 0.5 || o.mind.mood.grumpy > 0.5) && close(k, o) > 0.55 && !o.asleep && tr.shy < 0.7)
       return { id: "cheer", social: true, acts: tr.cuddly > 0.6 ? ["stroll", "chat", "teaparty"] : ["chat", "tag"], with: o.id, text: `cheer up ${o.name}`, until };
   }
-  for (const o of others(k)) if (close(k, o) < 0.4) return { id: "makeup", social: true, acts: ["chat", "teaparty", "stroll"], with: o.id, text: `make up with ${o.name}`, until };
   if (k.mind.rematch) { const o = KIDS.find((x) => x.id === k.mind.rematch); k.mind.rematch = null; if (o) return { id: "rematch", social: true, acts: ["tag"], with: o.id, text: `get ${o.name} back at tag`, until }; }
   return null;
 }
@@ -1208,11 +1216,13 @@ function mindTick(k, dt) {
   const base = { happy: 0.35, lonely: 0, grumpy: 0, excited: 0, proud: 0 };
   for (const key of MOODS) mo[key] += (base[key] - mo[key]) * dt * 0.012;
   const near = others(k).some((o) => o.area === k.area && !o.hidden && Math.hypot(o.x - k.x, o.y - k.y) < 90);
-  mo.lonely += dt * (near || k.asleep ? -0.03 : 0.004 * (0.3 + tr.sociable + tr.shy * 0.6) * PERSONA[k.id].body.love);
+  mo.lonely += dt * (near || k.asleep ? -0.03 : 0.007 * (0.5 + tr.sociable + tr.shy * 0.6) * PERSONA[k.id].body.love); // she misses her sisters when they're apart
   mo.grumpy += dt * ((n.hunger < 25 ? 0.006 : 0) + (n.energy < 20 ? 0.006 : 0) - (k.patted ? 0.05 : 0));
   mo.happy += dt * ((n.fun + n.love) / 200 - 0.5) * 0.01 + (k.patted ? dt * 0.05 : 0);
   for (const key of MOODS) mo[key] = clamp(mo[key], 0, 1);
-  for (const id in m.aff) m.aff[id] += (0.6 - m.aff[id]) * dt * 0.0003;
+  // time spent near each sister (fades over a few minutes), so she shares herself out fairly
+  m.together = m.together || {};
+  others(k).forEach((o) => { m.together[o.id] = (m.together[o.id] || 0) * Math.exp(-dt / 300) + (o.area === k.area && Math.hypot(o.x - k.x, o.y - k.y) < 90 ? dt : 0); });
   if ((m.rethinkT -= dt) <= 0) { m.rethinkT = rand(4, 7); rethink(k); }
 }
 
@@ -1323,10 +1333,7 @@ function partnerFor(k) {
   const opts = others(k).filter((o) => o.area === k.area && !busy(o) && INTERRUPTIBLE.includes(o.act) && !o.seatFrom);
   if (!opts.length) return null;
   // she picks whoever she feels closest to (and mivi always looks out for a lonely teddy)
-  const w = opts.map((o) => close(k, o) + PERSONA[o.id].social * 0.2 + (k.id === "rose" && o.id === "teddy" && o.needs.love < 60 ? 0.8 : 0));
-  let r = Math.random() * w.reduce((a, b) => a + b, 0);
-  for (let i = 0; i < opts.length; i++) if ((r -= w[i]) <= 0) return opts[i];
-  return opts[0];
+  return fairest(k, opts);
 }
 function recruit(p, act, steps) {
   endStep(p); snapOff(p); mindFinish(p);
@@ -1776,20 +1783,24 @@ const ACTS = {
             } }];
       });
     } },
-  tagalong: { area: null, w: (k) => (PERSONA[k.id].shy >= 0.5 && sisterToFollow(k) ? 0.3 + ((100 - k.needs.love) / 100) * 3 : 0),
+  tagalong: { area: null, w: (k) => (sisterToFollow(k) ? 0.3 + ((100 - k.needs.love) / 100) * 3 : 0),
     plan(k) {
       const o = sisterToFollow(k);
       if (!o) return ACTS.idle.plan(k);
       return [{ label: `following ${o.name} 🐾`, dur: rand(15, 25), run(dt, s) {
         if (o.area !== k.area || o.hidden || o.asleep || s.t > s.dur) return true;
-        if (!s.said) { s.said = 1; say(k, pick([`wait for me ${o.name}!`, "can teddy come too?", `${o.name}… 🥺`]), 1600); later(() => say(o, o.id === "rose" ? "of course teddy, hold my hand ♡" : "come on teddy! 💨", 1500), 1000); }
+        if (!s.said) {
+          s.said = 1;
+          say(k, k.id === "teddy" ? pick([`wait for me ${o.name}!`, "can teddy come too?", `${o.name}… 🥺`]) : pick([`${o.name}! wait for me 💕`, "can i come too?", `i missed you ${o.name}!`]), 1600);
+          later(() => say(o, o.id === "rose" ? `of course ${k.name}, hold my hand ♡` : o.id === "teddy" ? "…yay ♡ hold hands?" : `come on ${k.name}! 💨`), 1000);
+        }
         const d = Math.hypot(o.x - k.x, o.y - k.y);
         s.re = (s.re || 0) - dt;
         if (d > 26 && s.re <= 0) { s.re = 0.5; setPath(k, ...tileOf(o.x, o.y)); }
         if (d > 22) walk(k, dt, k.speed * 1.3); else { k.path = []; k.frame = 0; faceTo(k, o.x, o.y); }
         up(k, "love", 1.2 * dt);
         return false;
-      }, end() { bond(k, o, 0.05); achieve(k, "play"); remember(k, `i followed ${o.name} everywhere`); } }];
+      }, end() { bond(k, o, 0.05); achieve(k, "play"); remember(k, `${o.name} and i stayed together ♡`); } }];
     } },
 
   // ---------------- at home ----------------
@@ -1964,7 +1975,7 @@ function tagStep(k, game) {
 // ---------- choosing and running ----------
 function sisterToFollow(k) {
   const o = others(k).filter((o) => o.area === k.area && !o.asleep && !o.hidden && !o.held && o.act !== "tagalong");
-  return o.length ? o.sort((a, b) => (k.mind.aff[b.id] ?? 0.6) - (k.mind.aff[a.id] ?? 0.6))[0] : null;
+  return o.length ? fairest(k, o) : null;
 }
 // picking what to plant: her favourites, sometimes something new (vimi loves trying new things)
 function chooseCrop(k) {
@@ -3157,7 +3168,7 @@ function renderCard() {
     `<p>${m.goal?.social ? "🎯" : "⭐"} ${m.goal ? `${m.goal.social ? "wants to" : "dream:"} ${esc(m.goal.text.replace(/\bmy\b/g, "her"))}` : `${m.dreams} dream${m.dreams === 1 ? "" : "s"} come true`}</p>`,
     `<p>🌱 ${plot.length ? plot.map((t) => CROPS[t.crop].emoji).join("") + (ripe ? ` · ${ripe} ready` : "") : "her garden is empty"}</p>`,
     `<p>♡ loves ${esc(loves.join(" & "))}${meh.length ? ` · 😑 not ${esc(meh.join(" or "))}` : ""}</p>`,
-    `<p>${others(k).map((o) => `${o.name} ${close(k, o) > 0.8 ? "💞" : close(k, o) > 0.55 ? "💗" : close(k, o) > 0.4 ? "🤍" : "💢"}`).join(" · ")}</p>`,
+    `<p>💞 loves ${others(k).map((o) => o.name).join(" & ")} the same</p>`,
     m.memories[0] ? `<p>📔 “${esc(m.memories[0].text)}”</p>` : "",
   ].join("");
 }

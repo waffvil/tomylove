@@ -191,7 +191,7 @@ function sprite(kid, frame, sleep = false, view = "front") {
 //   apples garden myplot bench nap cloudgaze kite fountain kitty puddles chat tag hide stroll teaparty dressup
 //   eat cook tv piano read draw toys bath window tagalong missmama
 // meh:    things she starts out not caring for
-// bestie: the sister she starts closest to (feelings change as they play, squabble and make up)
+// the three sisters love each other equally and always want to be together
 // body:   how fast she gets hungry / tired / bored / lonely / grubby (1 = normal, 1.3 = faster)
 // yes / no: what she says when a sister asks her to play
 // the rest is how she talks to you, what she grows, how fast she walks and when she goes to bed
@@ -201,7 +201,6 @@ const PERSONALITY = {
     title: "our polite little princess 👑",
     traits: { curious: 0.5, playful: 0.6, cuddly: 0.7, calm: 0.7, brave: 0.4, sociable: 0.75, generous: 0.95, creative: 0.7, mischief: 0.1, girly: 1, foodie: 0.4, shy: 0.2 },
     loves: ["flowers", "teaparty", "dressup", "piano", "fountain", "myplot"], meh: ["puddles", "fishing"],
-    bestie: "blossom",
     body: { hunger: 1, energy: 1, fun: 1, love: 1, clean: 0.9 },
     speed: 34, bedtime: 21.75,
     crops: { rose: 1, tulip: 0.9, lavender: 0.75, daisy: 0.6, strawberry: 0.6 },
@@ -217,7 +216,6 @@ const PERSONALITY = {
     title: "first to charge in 💨",
     traits: { curious: 0.95, playful: 1, cuddly: 0.4, calm: 0.2, brave: 1, sociable: 0.85, generous: 0.5, creative: 0.5, mischief: 0.7, girly: 0.3, foodie: 0.5, shy: 0 },
     loves: ["swing", "slide", "tag", "kite", "puddles", "explore", "hide", "ball"], meh: ["read", "bench"],
-    bestie: "rose",
     body: { hunger: 1, energy: 1.1, fun: 1.3, love: 0.9, clean: 1.2 },
     speed: 39, bedtime: 21.75,
     crops: { sunflower: 1, watermelon: 0.9, pumpkin: 0.8, tomato: 0.6, carrot: 0.5 },
@@ -233,7 +231,6 @@ const PERSONALITY = {
     title: "our shy little baby 🧸",
     traits: { curious: 0.3, playful: 0.5, cuddly: 1, calm: 0.7, brave: 0.1, sociable: 0.5, generous: 0.6, creative: 0.4, mischief: 0.2, girly: 0.4, foodie: 0.8, shy: 1 },
     loves: ["tagalong", "missmama", "toys", "picnic", "icecream", "nap", "kitty", "myplot"], meh: ["explore", "tag", "fishing"],
-    bestie: "rose",
     body: { hunger: 1.2, energy: 1.2, fun: 1, love: 1.8, clean: 1 },
     speed: 28, bedtime: 21.25,
     crops: { strawberry: 1, blueberry: 0.85, carrot: 0.7, daisy: 0.6 },
